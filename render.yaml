@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: window-design-agent
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/catalog
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DESIGN_AGENT_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1
+      - key: OPENAI_IMAGE_MODEL
+        value: gpt-image-2
+      - key: OPENAI_IMAGE_SIZE
+        value: 1024x1024
+      - key: OPENAI_IMAGE_QUALITY
+        value: low
+      - key: OPENAI_IMAGE_OUTPUT_FORMAT
+        value: jpeg

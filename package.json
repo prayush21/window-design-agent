@@ -1,0 +1,14 @@
+{
+  "name": "design-agent-window-products",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "catalog": "node src/catalog.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

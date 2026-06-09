@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Window Design Agent</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <div class="upload-panel">
+          <div class="panel-heading">
+            <p class="eyebrow">Window Product Match</p>
+            <h1>Window product recommender</h1>
+          </div>
+
+          <form id="recommendation-form" class="controls">
+            <label class="drop-zone" for="image-input">
+              <input id="image-input" name="image" type="file" accept="image/*" required />
+              <span class="drop-title">Choose a window photo</span>
+              <span class="drop-copy">JPEG, PNG, WebP, or GIF</span>
+            </label>
+
+            <div class="field-row">
+              <label>
+                <span>Provider</span>
+                <select id="provider-input" name="provider">
+                  <option value="openai">OpenAI</option>
+                  <option value="gemini">Gemini</option>
+                  <option value="anthropic">Anthropic</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Model override</span>
+                <input id="model-input" name="model" type="text" placeholder="optional" />
+              </label>
+            </div>
+
+            <button id="submit-button" type="submit">Run recommendation</button>
+          </form>
+        </div>
+
+        <div class="preview-panel">
+          <img id="preview-image" alt="" hidden />
+          <div id="empty-preview" class="empty-preview">No image selected</div>
+        </div>
+      </section>
+
+      <section class="results-grid">
+        <article class="result-panel">
+          <div class="panel-heading compact">
+            <p class="eyebrow">Recommendation</p>
+            <h2 id="recommendation-title">No result yet</h2>
+          </div>
+          <div id="recommendation-body" class="recommendation-body"></div>
+        </article>
+
+        <article class="result-panel">
+          <div class="panel-heading compact">
+            <p class="eyebrow">Catalog</p>
+            <h2>Candidate products</h2>
+          </div>
+          <div id="catalog-grid" class="catalog-grid"></div>
+        </article>
+      </section>
+
+      <section class="json-panel">
+        <div class="panel-heading compact">
+          <p class="eyebrow">JSON</p>
+          <h2>Raw response</h2>
+        </div>
+        <pre id="json-output">{}</pre>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
