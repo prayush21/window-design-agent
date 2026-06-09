@@ -2,7 +2,7 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadCatalog, selectCandidates } from "./catalog.js";
+import { getMimeType, loadCatalog, selectCandidates } from "./catalog.js";
 import { generateProductPreview } from "./image-preview.js";
 import { normalizeProvider, rerankProducts } from "./providers.js";
 
@@ -216,8 +216,11 @@ function sendFile(res, filePath) {
   }
 
   const extension = path.extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[extension]?.startsWith("image/")
+    ? getMimeType(filePath)
+    : MIME_TYPES[extension];
   res.writeHead(200, {
-    "Content-Type": MIME_TYPES[extension] || "application/octet-stream",
+    "Content-Type": contentType || "application/octet-stream",
     "Cache-Control": extension.match(/\.(jpg|jpeg|png|webp|gif)$/) ? "public, max-age=300" : "no-store"
   });
   fs.createReadStream(filePath).pipe(res);

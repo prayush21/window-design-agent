@@ -1,6 +1,5 @@
 import fs from "node:fs";
-import path from "node:path";
-import { getMimeType } from "./catalog.js";
+import { detectMimeTypeFromBytes, getMimeType } from "./catalog.js";
 
 const DEFAULT_MODEL = "gpt-image-2";
 const DEFAULT_SIZE = "1024x1024";
@@ -18,7 +17,7 @@ export async function generateProductPreview({ userImageDataUrl, product, recomm
 
   form.append("model", process.env.OPENAI_IMAGE_MODEL || DEFAULT_MODEL);
   form.append("image[]", userImage.blob, `room-window.${extensionForMime(userImage.mimeType)}`);
-  form.append("image[]", productImage.blob, path.basename(product.variants[0].imagePath));
+  form.append("image[]", productImage.blob, `product-reference.${extensionForMime(productImage.mimeType)}`);
   form.append("prompt", buildPreviewPrompt({ product, recommendation }));
   form.append("size", process.env.OPENAI_IMAGE_SIZE || DEFAULT_SIZE);
   form.append("quality", process.env.OPENAI_IMAGE_QUALITY || DEFAULT_QUALITY);
@@ -65,17 +64,23 @@ Recommendation context: ${recommendation?.reason || "Best-ranked product for thi
 function dataUrlToBlob(dataUrl) {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (!match) throw new Error("Expected a base64 image data URL.");
+  const bytes = Buffer.from(match[2], "base64");
+  const detectedMimeType = detectMimeTypeFromBytes(bytes);
+  const mimeType = normalizeMimeType(detectedMimeType || match[1]);
 
   return {
-    mimeType: match[1],
-    blob: new Blob([Buffer.from(match[2], "base64")], { type: match[1] })
+    mimeType,
+    blob: new Blob([bytes], { type: mimeType })
   };
 }
 
 function fileToBlob(filePath) {
+  const bytes = fs.readFileSync(filePath);
+  const mimeType = detectMimeTypeFromBytes(bytes) || getMimeType(filePath);
+
   return {
-    mimeType: getMimeType(filePath),
-    blob: new Blob([fs.readFileSync(filePath)], { type: getMimeType(filePath) })
+    mimeType,
+    blob: new Blob([bytes], { type: mimeType })
   };
 }
 
@@ -84,4 +89,8 @@ function extensionForMime(mimeType) {
   if (mimeType === "image/webp") return "webp";
   if (mimeType === "image/gif") return "gif";
   return "jpg";
+}
+
+function normalizeMimeType(mimeType) {
+  return mimeType === "image/jpg" ? "image/jpeg" : mimeType;
 }
