@@ -1,10 +1,14 @@
 import fs from "node:fs";
+import sharp from "sharp";
 import { detectMimeTypeFromBytes, getMimeType } from "./catalog.js";
 
 const DEFAULT_MODEL = "gpt-image-2";
 const DEFAULT_SIZE = "1024x1024";
 const DEFAULT_QUALITY = "low";
 const DEFAULT_OUTPUT_FORMAT = "jpeg";
+const NORMALIZED_INPUT_MIME_TYPE = "image/png";
+const NORMALIZED_INPUT_EXTENSION = "png";
+const MAX_INPUT_DIMENSION = 2048;
 
 export async function generateProductPreview({ userImageDataUrl, product, recommendation }) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -12,12 +16,12 @@ export async function generateProductPreview({ userImageDataUrl, product, recomm
 
   const outputFormat = process.env.OPENAI_IMAGE_OUTPUT_FORMAT || DEFAULT_OUTPUT_FORMAT;
   const form = new FormData();
-  const userImage = dataUrlToBlob(userImageDataUrl);
-  const productImage = fileToBlob(product.variants[0].imagePath);
+  const userImage = await dataUrlToNormalizedBlob(userImageDataUrl);
+  const productImage = await fileToNormalizedBlob(product.variants[0].imagePath);
 
   form.append("model", process.env.OPENAI_IMAGE_MODEL || DEFAULT_MODEL);
-  form.append("image[]", userImage.blob, `room-window.${extensionForMime(userImage.mimeType)}`);
-  form.append("image[]", productImage.blob, `product-reference.${extensionForMime(productImage.mimeType)}`);
+  form.append("image[]", userImage.blob, `room-window.${NORMALIZED_INPUT_EXTENSION}`);
+  form.append("image[]", productImage.blob, `product-reference.${NORMALIZED_INPUT_EXTENSION}`);
   form.append("prompt", buildPreviewPrompt({ product, recommendation }));
   form.append("size", process.env.OPENAI_IMAGE_SIZE || DEFAULT_SIZE);
   form.append("quality", process.env.OPENAI_IMAGE_QUALITY || DEFAULT_QUALITY);
@@ -34,7 +38,10 @@ export async function generateProductPreview({ userImageDataUrl, product, recomm
   const json = await response.json().catch(() => null);
   if (!response.ok) {
     const message = json?.error?.message || response.statusText;
-    throw new Error(`OpenAI image edit error (${response.status}): ${message}`);
+    const requestId = response.headers.get("x-request-id");
+    throw new Error(
+      `OpenAI image edit error (${response.status}): ${message}${requestId ? ` Request ID: ${requestId}.` : ""}`
+    );
   }
 
   const base64 = json?.data?.[0]?.b64_json;
@@ -45,6 +52,10 @@ export async function generateProductPreview({ userImageDataUrl, product, recomm
     size: process.env.OPENAI_IMAGE_SIZE || DEFAULT_SIZE,
     quality: process.env.OPENAI_IMAGE_QUALITY || DEFAULT_QUALITY,
     outputFormat,
+    normalizedInputs: {
+      roomImage: userImage.metadata,
+      productImage: productImage.metadata
+    },
     imageDataUrl: `data:image/${outputFormat};base64,${base64}`,
     revisedPrompt: json?.data?.[0]?.revised_prompt || null,
     usage: json?.usage || null
@@ -54,43 +65,73 @@ export async function generateProductPreview({ userImageDataUrl, product, recomm
 function buildPreviewPrompt({ product, recommendation }) {
   return `Edit the first image, which is the user's room and window photo, by realistically installing the window covering shown in the second image.
 
-Use the second image only as the product reference for appearance, structure, folds/slats, material impression, and proportions. The selected product is ${product.displayName}.
+If the user's window already has curtains, blinds, shades, rods, valances, tiebacks, or other window coverings, remove or replace those existing coverings cleanly before installing the selected product. Preserve the visible window frame, glass, trim, wall, sill, and surrounding room details as much as possible.
+
+Use the second image only as the product reference for appearance, structure, folds/slats, material impression, and proportions. The selected product is ${product.displayName}. Place it only on the actual window area, scaled and aligned to the window dimensions and perspective.
 
 Preserve the user's original room, camera angle, window size, wall color, furniture, lighting direction, shadows, and overall realism. Do not change the room layout. Do not add labels, watermarks, people, or extra decor. The result should look like a believable product visualization after installation.
 
 Recommendation context: ${recommendation?.reason || "Best-ranked product for this room."}`;
 }
 
-function dataUrlToBlob(dataUrl) {
+async function dataUrlToNormalizedBlob(dataUrl) {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (!match) throw new Error("Expected a base64 image data URL.");
   const bytes = Buffer.from(match[2], "base64");
   const detectedMimeType = detectMimeTypeFromBytes(bytes);
   const mimeType = normalizeMimeType(detectedMimeType || match[1]);
 
-  return {
-    mimeType,
-    blob: new Blob([bytes], { type: mimeType })
-  };
+  return normalizeImageBytes(bytes, {
+    source: "room-window",
+    sourceMimeType: mimeType
+  });
 }
 
-function fileToBlob(filePath) {
+async function fileToNormalizedBlob(filePath) {
   const bytes = fs.readFileSync(filePath);
   const mimeType = detectMimeTypeFromBytes(bytes) || getMimeType(filePath);
 
-  return {
-    mimeType,
-    blob: new Blob([bytes], { type: mimeType })
-  };
-}
-
-function extensionForMime(mimeType) {
-  if (mimeType === "image/png") return "png";
-  if (mimeType === "image/webp") return "webp";
-  if (mimeType === "image/gif") return "gif";
-  return "jpg";
+  return normalizeImageBytes(bytes, {
+    source: "product-reference",
+    sourceMimeType: mimeType
+  });
 }
 
 function normalizeMimeType(mimeType) {
   return mimeType === "image/jpg" ? "image/jpeg" : mimeType;
+}
+
+async function normalizeImageBytes(bytes, { source, sourceMimeType }) {
+  const pipeline = sharp(bytes, {
+    animated: false,
+    limitInputPixels: 64_000_000
+  })
+    .rotate()
+    .resize({
+      width: MAX_INPUT_DIMENSION,
+      height: MAX_INPUT_DIMENSION,
+      fit: "inside",
+      withoutEnlargement: true
+    })
+    .removeAlpha()
+    .flatten({ background: "#ffffff" })
+    .toColourspace("srgb")
+    .png();
+
+  const normalizedBytes = await pipeline.toBuffer();
+  const metadata = await sharp(normalizedBytes).metadata();
+
+  return {
+    mimeType: NORMALIZED_INPUT_MIME_TYPE,
+    blob: new Blob([normalizedBytes], { type: NORMALIZED_INPUT_MIME_TYPE }),
+    metadata: {
+      source,
+      sourceMimeType,
+      mimeType: NORMALIZED_INPUT_MIME_TYPE,
+      width: metadata.width,
+      height: metadata.height,
+      channels: metadata.channels,
+      sizeBytes: normalizedBytes.length
+    }
+  };
 }
