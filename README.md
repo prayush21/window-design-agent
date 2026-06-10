@@ -5,6 +5,7 @@ Small prototype for recommending the best window-covering product from `window-p
 ## Run
 
 ```bash
+cp .env.example .env
 npm run dev
 ```
 
@@ -30,12 +31,13 @@ OPENAI_IMAGE_MODEL=gpt-image-2
 OPENAI_IMAGE_SIZE=1024x1024
 OPENAI_IMAGE_QUALITY=low
 OPENAI_IMAGE_OUTPUT_FORMAT=jpeg
+GEMINI_IMAGE_MODEL=gemini-3.1-flash-image
 ```
 
 Default provider:
 
 ```bash
-DESIGN_AGENT_PROVIDER=openai
+DESIGN_AGENT_PROVIDER=gemini
 ```
 
 ## API
@@ -48,8 +50,9 @@ Returns the discovered catalog.
 
 ```json
 {
-  "provider": "openai",
+  "provider": "gemini",
   "model": "optional-model-override",
+  "systemPrompt": "optional recommendation prompt override",
   "imageDataUrl": "data:image/jpeg;base64,...",
   "topK": 6
 }
@@ -62,6 +65,8 @@ Returns ranked JSON plus readable explanations.
 ```json
 {
   "imageDataUrl": "data:image/jpeg;base64,...",
+  "imageProvider": "openai",
+  "imageModel": "optional-image-model-override",
   "productId": "RM1311",
   "recommendation": {
     "productId": "RM1311",
@@ -70,7 +75,7 @@ Returns ranked JSON plus readable explanations.
 }
 ```
 
-Uses OpenAI image edits with `gpt-image-2` by default to create an installed-product preview from the uploaded room image and the selected catalog product image.
+Uses OpenAI image edits with `gpt-image-2` by default to create an installed-product preview from the uploaded room image and the selected catalog product image. Set `imageProvider` to `gemini` to use the Gemini image model configured by `GEMINI_IMAGE_MODEL`.
 
 ## Architecture
 

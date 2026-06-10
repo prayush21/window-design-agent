@@ -27,7 +27,7 @@
                 <span>Provider</span>
                 <select id="provider-input" name="provider">
                   <option value="openai">OpenAI</option>
-                  <option value="gemini">Gemini</option>
+                  <option value="gemini" selected>Gemini</option>
                   <option value="anthropic">Anthropic</option>
                 </select>
               </label>
@@ -37,6 +37,11 @@
                 <input id="model-input" name="model" type="text" placeholder="optional" />
               </label>
             </div>
+
+            <label class="prompt-field">
+              <span>System prompt</span>
+              <textarea id="system-prompt-input" name="systemPrompt" rows="9"></textarea>
+            </label>
 
             <button id="submit-button" type="submit">Run recommendation</button>
           </form>

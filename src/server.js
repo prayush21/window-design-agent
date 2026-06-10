@@ -1,10 +1,11 @@
+import "./env.js";
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getMimeType, loadCatalog, selectCandidates } from "./catalog.js";
 import { generateProductPreview } from "./image-preview.js";
-import { normalizeProvider, rerankProducts } from "./providers.js";
+import { DEFAULT_RECOMMENDATION_PROMPT, normalizeProvider, rerankProducts } from "./providers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,10 @@ export function createAppServer() {
     try {
       if (req.method === "GET" && req.url === "/api/catalog") {
         return sendJson(res, publicCatalog());
+      }
+
+      if (req.method === "GET" && req.url === "/api/default-prompt") {
+        return sendJson(res, { systemPrompt: DEFAULT_RECOMMENDATION_PROMPT });
       }
 
       if (req.method === "POST" && req.url === "/api/recommend") {
@@ -77,6 +82,7 @@ async function handleRecommend(req, res) {
   const reranked = await rerankProducts({
     provider,
     model: body.model,
+    systemPrompt: body.systemPrompt,
     userImageDataUrl: imageDataUrl,
     candidates
   });
@@ -113,6 +119,8 @@ async function handlePreviewImage(req, res) {
   }
 
   const preview = await generateProductPreview({
+    provider: body.imageProvider,
+    model: body.imageModel,
     userImageDataUrl: imageDataUrl,
     product,
     recommendation: body.recommendation

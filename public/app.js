@@ -2,6 +2,7 @@ const form = document.querySelector("#recommendation-form");
 const imageInput = document.querySelector("#image-input");
 const providerInput = document.querySelector("#provider-input");
 const modelInput = document.querySelector("#model-input");
+const systemPromptInput = document.querySelector("#system-prompt-input");
 const submitButton = document.querySelector("#submit-button");
 const previewImage = document.querySelector("#preview-image");
 const emptyPreview = document.querySelector("#empty-preview");
@@ -14,6 +15,7 @@ let imageDataUrl = null;
 let latestRecommendationPayload = null;
 
 loadCatalog();
+loadDefaultPrompt();
 
 imageInput.addEventListener("change", async () => {
   const file = imageInput.files?.[0];
@@ -39,6 +41,7 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify({
         provider: providerInput.value,
         model: modelInput.value.trim() || undefined,
+        systemPrompt: systemPromptInput.value.trim() || undefined,
         imageDataUrl
       })
     });
@@ -76,6 +79,12 @@ async function loadCatalog() {
     .join("");
 }
 
+async function loadDefaultPrompt() {
+  const response = await fetch("/api/default-prompt");
+  const payload = await response.json();
+  systemPromptInput.value = payload.systemPrompt || "";
+}
+
 function renderRecommendation(payload) {
   latestRecommendationPayload = payload;
   const recommendation = payload.recommendation;
@@ -105,7 +114,15 @@ function renderRecommendation(payload) {
         <p>${escapeHtml(recommendation.reason)}</p>
         <div class="preview-action">
           <span>Preview this product on the uploaded window?</span>
-          <button id="preview-button" type="button">Generate preview</button>
+          <div class="generate-control">
+            <button id="preview-button" type="button">Generate</button>
+            <label class="image-provider-field" aria-label="Image generation provider">
+              <select id="image-provider-input" name="imageProvider">
+                <option value="openai"${imageProviderSelected(payload.provider, "openai")}>OpenAI image</option>
+                <option value="gemini"${imageProviderSelected(payload.provider, "gemini")}>Gemini image</option>
+              </select>
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -125,11 +142,14 @@ async function generatePreviewImage() {
   if (!imageDataUrl || !latestRecommendationPayload?.recommendation) return;
 
   const previewButton = document.querySelector("#preview-button");
+  const imageProviderInput = document.querySelector("#image-provider-input");
   const previewContainer = document.querySelector("#generated-preview");
+  const selectedImageProvider = imageProviderInput?.value || "openai";
   previewButton.disabled = true;
+  if (imageProviderInput) imageProviderInput.disabled = true;
   previewButton.textContent = "Generating...";
   previewContainer.hidden = false;
-  previewContainer.innerHTML = "<p>Creating installed product preview...</p>";
+  previewContainer.innerHTML = `<p>Creating installed product preview with ${escapeHtml(formatImageProvider(selectedImageProvider))}...</p>`;
 
   try {
     const response = await fetch("/api/preview-image", {
@@ -137,6 +157,7 @@ async function generatePreviewImage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         imageDataUrl,
+        imageProvider: selectedImageProvider,
         productId: latestRecommendationPayload.recommendation.productId,
         recommendation: latestRecommendationPayload.recommendation
       })
@@ -150,7 +171,7 @@ async function generatePreviewImage() {
         <img src="${payload.imageDataUrl}" alt="${escapeHtml(payload.displayName)} installed preview" />
         <figcaption>
           <strong>${escapeHtml(payload.displayName)}</strong>
-          <span>${escapeHtml(payload.model)} · ${escapeHtml(payload.quality)} quality</span>
+          <span>${escapeHtml(formatImageProvider(payload.provider))} · ${escapeHtml(payload.model)} · ${escapeHtml(payload.quality)} quality</span>
         </figcaption>
       </figure>
     `;
@@ -169,8 +190,20 @@ async function generatePreviewImage() {
     previewContainer.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
   } finally {
     previewButton.disabled = false;
-    previewButton.textContent = "Generate preview";
+    if (imageProviderInput) imageProviderInput.disabled = false;
+    previewButton.textContent = "Generate";
   }
+}
+
+function formatImageProvider(provider) {
+  return provider === "gemini" ? "Gemini" : "OpenAI";
+}
+
+function imageProviderSelected(recommendationProvider, imageProvider) {
+  const supportedProvider = recommendationProvider === "openai" || recommendationProvider === "gemini"
+    ? recommendationProvider
+    : "openai";
+  return supportedProvider === imageProvider ? " selected" : "";
 }
 
 function renderAnalysis(analysis) {

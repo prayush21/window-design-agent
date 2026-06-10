@@ -10,11 +10,17 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: DESIGN_AGENT_PROVIDER
-        value: openai
+        value: gemini
       - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
         sync: false
       - key: OPENAI_MODEL
         value: gpt-4.1
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: IMAGE_PREVIEW_PROVIDER
+        value: openai
       - key: OPENAI_IMAGE_MODEL
         value: gpt-image-2
       - key: OPENAI_IMAGE_SIZE
@@ -23,3 +29,5 @@ services:
         value: low
       - key: OPENAI_IMAGE_OUTPUT_FORMAT
         value: jpeg
+      - key: GEMINI_IMAGE_MODEL
+        value: gemini-3.1-flash-image

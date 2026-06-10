@@ -1,58 +1,7 @@
 import { imageFileToDataUrl } from "./catalog.js";
 
 const PROVIDERS = new Set(["openai", "gemini", "anthropic"]);
-
-export function normalizeProvider(provider) {
-  const normalized = (provider || process.env.DESIGN_AGENT_PROVIDER || "openai").toLowerCase();
-  if (!PROVIDERS.has(normalized)) {
-    throw new Error(`Unsupported provider "${provider}". Use openai, gemini, or anthropic.`);
-  }
-  return normalized;
-}
-
-export async function rerankProducts({ provider, model, userImageDataUrl, candidates }) {
-  const normalizedProvider = normalizeProvider(provider);
-  const request = buildRerankRequest({ userImageDataUrl, candidates });
-
-  if (normalizedProvider === "openai") {
-    return callOpenAI({ model, ...request });
-  }
-
-  if (normalizedProvider === "gemini") {
-    return callGemini({ model, ...request });
-  }
-
-  return callAnthropic({ model, ...request });
-}
-
-function buildRerankRequest({ userImageDataUrl, candidates }) {
-  const productSummaries = candidates
-    .map((product, index) => {
-      const variant = product.variants[0];
-      return [
-        `Candidate ${index + 1}`,
-        `productId: ${product.productId}`,
-        `variantId: ${variant.variantId}`,
-        `category: ${product.category}`,
-        `displayName: ${product.displayName}`,
-        `color: ${variant.color ?? "unknown"}`,
-        `fabric: ${variant.fabric ?? "unknown"}`,
-        `material: ${variant.material ?? "unknown"}`,
-        `opacity: ${variant.opacity ?? "unknown"}`
-      ].join("\n");
-    })
-    .join("\n\n");
-
-  const prompt = `You are an interior-design product recommendation agent for window coverings.
-
-The first image is the user's room/window photo. The following images are candidate product images in the same order as the candidate list.
-
-Rank the candidates by which product would look best in the user's room and window context. Consider visual harmony, room style, color compatibility, window shape, light/privacy needs visible in the photo, and practical fit. Do not invent product IDs.
-
-Candidates:
-${productSummaries}
-
-Return only valid JSON matching this shape:
+const RESPONSE_SCHEMA_PROMPT = `Return only valid JSON matching this shape:
 {
   "analysis": {
     "window": {
@@ -89,6 +38,61 @@ Return only valid JSON matching this shape:
     }
   ]
 }`;
+
+export const DEFAULT_RECOMMENDATION_PROMPT = `You are an interior-design product recommendation agent for window coverings.
+
+The first image is the user's room/window photo. The following images are candidate product images in the same order as the candidate list.
+
+Rank the candidates by which product would look best in the user's room and window context. Consider visual harmony, room style, color compatibility, window shape, light/privacy needs visible in the photo, and practical fit. Do not invent product IDs.`;
+
+export function normalizeProvider(provider) {
+  const normalized = (provider || process.env.DESIGN_AGENT_PROVIDER || "openai").toLowerCase();
+  if (!PROVIDERS.has(normalized)) {
+    throw new Error(`Unsupported provider "${provider}". Use openai, gemini, or anthropic.`);
+  }
+  return normalized;
+}
+
+export async function rerankProducts({ provider, model, systemPrompt, userImageDataUrl, candidates }) {
+  const normalizedProvider = normalizeProvider(provider);
+  const request = buildRerankRequest({ systemPrompt, userImageDataUrl, candidates });
+
+  if (normalizedProvider === "openai") {
+    return callOpenAI({ model, ...request });
+  }
+
+  if (normalizedProvider === "gemini") {
+    return callGemini({ model, ...request });
+  }
+
+  return callAnthropic({ model, ...request });
+}
+
+function buildRerankRequest({ systemPrompt, userImageDataUrl, candidates }) {
+  const productSummaries = candidates
+    .map((product, index) => {
+      const variant = product.variants[0];
+      return [
+        `Candidate ${index + 1}`,
+        `productId: ${product.productId}`,
+        `variantId: ${variant.variantId}`,
+        `category: ${product.category}`,
+        `displayName: ${product.displayName}`,
+        `color: ${variant.color ?? "unknown"}`,
+        `fabric: ${variant.fabric ?? "unknown"}`,
+        `material: ${variant.material ?? "unknown"}`,
+        `opacity: ${variant.opacity ?? "unknown"}`
+      ].join("\n");
+    })
+    .join("\n\n");
+
+  const instructionPrompt = String(systemPrompt || "").trim() || DEFAULT_RECOMMENDATION_PROMPT;
+  const prompt = `${instructionPrompt}
+
+Candidates:
+${productSummaries}
+
+${RESPONSE_SCHEMA_PROMPT}`;
 
   return {
     prompt,

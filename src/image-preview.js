@@ -2,29 +2,65 @@ import fs from "node:fs";
 import sharp from "sharp";
 import { detectMimeTypeFromBytes, getMimeType } from "./catalog.js";
 
-const DEFAULT_MODEL = "gpt-image-2";
-const DEFAULT_SIZE = "1024x1024";
-const DEFAULT_QUALITY = "low";
-const DEFAULT_OUTPUT_FORMAT = "jpeg";
+const IMAGE_PROVIDERS = new Set(["openai", "gemini"]);
+const DEFAULT_OPENAI_MODEL = "gpt-image-2";
+const DEFAULT_OPENAI_SIZE = "1024x1024";
+const DEFAULT_OPENAI_QUALITY = "low";
+const DEFAULT_OPENAI_OUTPUT_FORMAT = "jpeg";
+const DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-image";
 const NORMALIZED_INPUT_MIME_TYPE = "image/png";
 const NORMALIZED_INPUT_EXTENSION = "png";
 const MAX_INPUT_DIMENSION = 2048;
 
-export async function generateProductPreview({ userImageDataUrl, product, recommendation }) {
+export async function generateProductPreview({
+  provider,
+  model,
+  userImageDataUrl,
+  product,
+  recommendation
+}) {
+  const normalizedProvider = normalizeImageProvider(provider);
+  const prompt = buildPreviewPrompt({ product, recommendation });
+  const inputs = await normalizePreviewInputs({ userImageDataUrl, product });
+
+  if (normalizedProvider === "gemini") {
+    return generateGeminiProductPreview({ model, prompt, inputs });
+  }
+
+  return generateOpenAIProductPreview({ model, prompt, inputs });
+}
+
+function normalizeImageProvider(provider) {
+  const normalized = (provider || process.env.IMAGE_PREVIEW_PROVIDER || "openai").toLowerCase();
+  if (!IMAGE_PROVIDERS.has(normalized)) {
+    throw new Error(`Unsupported image provider "${provider}". Use openai or gemini.`);
+  }
+  return normalized;
+}
+
+async function normalizePreviewInputs({ userImageDataUrl, product }) {
+  return {
+    userImage: await dataUrlToNormalizedBlob(userImageDataUrl),
+    productImage: await fileToNormalizedBlob(product.variants[0].imagePath)
+  };
+}
+
+async function generateOpenAIProductPreview({ model, prompt, inputs }) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("Missing OPENAI_API_KEY.");
 
-  const outputFormat = process.env.OPENAI_IMAGE_OUTPUT_FORMAT || DEFAULT_OUTPUT_FORMAT;
+  const selectedModel = model || process.env.OPENAI_IMAGE_MODEL || DEFAULT_OPENAI_MODEL;
+  const size = process.env.OPENAI_IMAGE_SIZE || DEFAULT_OPENAI_SIZE;
+  const quality = process.env.OPENAI_IMAGE_QUALITY || DEFAULT_OPENAI_QUALITY;
+  const outputFormat = process.env.OPENAI_IMAGE_OUTPUT_FORMAT || DEFAULT_OPENAI_OUTPUT_FORMAT;
   const form = new FormData();
-  const userImage = await dataUrlToNormalizedBlob(userImageDataUrl);
-  const productImage = await fileToNormalizedBlob(product.variants[0].imagePath);
 
-  form.append("model", process.env.OPENAI_IMAGE_MODEL || DEFAULT_MODEL);
-  form.append("image[]", userImage.blob, `room-window.${NORMALIZED_INPUT_EXTENSION}`);
-  form.append("image[]", productImage.blob, `product-reference.${NORMALIZED_INPUT_EXTENSION}`);
-  form.append("prompt", buildPreviewPrompt({ product, recommendation }));
-  form.append("size", process.env.OPENAI_IMAGE_SIZE || DEFAULT_SIZE);
-  form.append("quality", process.env.OPENAI_IMAGE_QUALITY || DEFAULT_QUALITY);
+  form.append("model", selectedModel);
+  form.append("image[]", inputs.userImage.blob, `room-window.${NORMALIZED_INPUT_EXTENSION}`);
+  form.append("image[]", inputs.productImage.blob, `product-reference.${NORMALIZED_INPUT_EXTENSION}`);
+  form.append("prompt", prompt);
+  form.append("size", size);
+  form.append("quality", quality);
   form.append("output_format", outputFormat);
 
   const response = await fetch("https://api.openai.com/v1/images/edits", {
@@ -48,17 +84,81 @@ export async function generateProductPreview({ userImageDataUrl, product, recomm
   if (!base64) throw new Error("OpenAI image edit response did not include image data.");
 
   return {
-    model: process.env.OPENAI_IMAGE_MODEL || DEFAULT_MODEL,
-    size: process.env.OPENAI_IMAGE_SIZE || DEFAULT_SIZE,
-    quality: process.env.OPENAI_IMAGE_QUALITY || DEFAULT_QUALITY,
+    provider: "openai",
+    model: selectedModel,
+    size,
+    quality,
     outputFormat,
     normalizedInputs: {
-      roomImage: userImage.metadata,
-      productImage: productImage.metadata
+      roomImage: inputs.userImage.metadata,
+      productImage: inputs.productImage.metadata
     },
     imageDataUrl: `data:image/${outputFormat};base64,${base64}`,
     revisedPrompt: json?.data?.[0]?.revised_prompt || null,
     usage: json?.usage || null
+  };
+}
+
+async function generateGeminiProductPreview({ model, prompt, inputs }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("Missing GEMINI_API_KEY.");
+
+  const selectedModel = model || process.env.GEMINI_IMAGE_MODEL || DEFAULT_GEMINI_MODEL;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(selectedModel)}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "x-goog-api-key": apiKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt },
+              toGeminiInlineData(inputs.userImage),
+              toGeminiInlineData(inputs.productImage)
+            ]
+          }
+        ]
+      })
+    }
+  );
+
+  const json = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = json?.error?.message || response.statusText;
+    throw new Error(`Gemini image generation error (${response.status}): ${message}`);
+  }
+
+  const parts = json?.candidates?.[0]?.content?.parts || [];
+  const imagePart = parts.find((part) => part.inlineData?.data || part.inline_data?.data);
+  const inlineData = imagePart?.inlineData || imagePart?.inline_data;
+  if (!inlineData?.data) throw new Error("Gemini image generation response did not include image data.");
+
+  const mimeType = inlineData.mimeType || inlineData.mime_type || "image/png";
+  const outputFormat = mimeType.replace(/^image\//, "");
+
+  return {
+    provider: "gemini",
+    model: selectedModel,
+    size: "auto",
+    quality: "auto",
+    outputFormat,
+    normalizedInputs: {
+      roomImage: inputs.userImage.metadata,
+      productImage: inputs.productImage.metadata
+    },
+    imageDataUrl: `data:${mimeType};base64,${inlineData.data}`,
+    revisedPrompt:
+      parts
+        .map((part) => part.text)
+        .filter(Boolean)
+        .join("\n") || null,
+    usage: json?.usageMetadata || null
   };
 }
 
@@ -123,6 +223,7 @@ async function normalizeImageBytes(bytes, { source, sourceMimeType }) {
 
   return {
     mimeType: NORMALIZED_INPUT_MIME_TYPE,
+    base64: normalizedBytes.toString("base64"),
     blob: new Blob([normalizedBytes], { type: NORMALIZED_INPUT_MIME_TYPE }),
     metadata: {
       source,
@@ -132,6 +233,15 @@ async function normalizeImageBytes(bytes, { source, sourceMimeType }) {
       height: metadata.height,
       channels: metadata.channels,
       sizeBytes: normalizedBytes.length
+    }
+  };
+}
+
+function toGeminiInlineData(image) {
+  return {
+    inline_data: {
+      mime_type: image.mimeType,
+      data: image.base64
     }
   };
 }
