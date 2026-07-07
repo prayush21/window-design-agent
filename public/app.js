@@ -10,6 +10,7 @@ const catalogGrid = document.querySelector("#catalog-grid");
 const recommendationTitle = document.querySelector("#recommendation-title");
 const recommendationBody = document.querySelector("#recommendation-body");
 const jsonOutput = document.querySelector("#json-output");
+const MAX_PREVIEW_OPTIONS = 10;
 
 let imageDataUrl = null;
 let latestRecommendationPayload = null;
@@ -72,6 +73,7 @@ async function loadCatalog() {
           <figcaption>
             <strong>${escapeHtml(product.displayName)}</strong>
             <span>${escapeHtml(product.category)}</span>
+            ${renderProductVariants(product)}
           </figcaption>
         </figure>
       `
@@ -86,47 +88,30 @@ async function loadDefaultPrompt() {
 }
 
 function renderRecommendation(payload) {
-  latestRecommendationPayload = payload;
+  const previewOptions = getPreviewOptions(payload);
+  latestRecommendationPayload = { ...payload, previewOptions };
   const recommendation = payload.recommendation;
-  recommendationTitle.textContent = recommendation.displayName;
+  recommendationTitle.textContent = formatRecommendationName(recommendation);
 
   const analysis = payload.analysis;
-  const rankingHtml = payload.rankings
-    .map(
-      (item) => `
-        <li>
-          <img src="${item.imageUrl}" alt="${escapeHtml(item.displayName)}" />
-          <div>
-            <strong>${item.rank}. ${escapeHtml(item.displayName)}</strong>
-            <span>${Math.round(item.score * 100)}% match</span>
-            <p>${escapeHtml(item.reason)}</p>
-          </div>
-        </li>
-      `
-    )
+  const rankingHtml = previewOptions
+    .map((item, index) => renderRankingItem(item, index, payload.provider))
     .join("");
 
   recommendationBody.innerHTML = `
     <div class="hero-result">
-      <img src="${recommendation.imageUrl}" alt="${escapeHtml(recommendation.displayName)}" />
+      ${renderHeroImage(recommendation)}
       <div>
         <p class="score">${Math.round(recommendation.confidence * 100)}% confidence</p>
+        <p class="variant-summary">${escapeHtml(formatVariantSummary(recommendation))}</p>
         <p>${escapeHtml(recommendation.reason)}</p>
         <div class="preview-action">
           <span>Preview this product on the uploaded window?</span>
-          <div class="generate-control">
-            <button id="preview-button" type="button">Generate</button>
-            <label class="image-provider-field" aria-label="Image generation provider">
-              <select id="image-provider-input" name="imageProvider">
-                <option value="openai"${imageProviderSelected(payload.provider, "openai")}>OpenAI image</option>
-                <option value="gemini"${imageProviderSelected(payload.provider, "gemini")}>Gemini image</option>
-              </select>
-            </label>
-          </div>
+          ${renderGenerateControl({ optionIndex: "recommendation", provider: payload.provider })}
         </div>
       </div>
     </div>
-    <div id="generated-preview" class="generated-preview" hidden></div>
+    <div class="generated-preview" data-preview-container="recommendation" hidden></div>
     ${analysis ? renderAnalysis(analysis) : ""}
     <ol class="ranking-list">${rankingHtml}</ol>
   `;
@@ -134,20 +119,75 @@ function renderRecommendation(payload) {
   document.querySelectorAll(".product-card").forEach((card) => {
     card.classList.toggle("selected", card.dataset.productId === recommendation.productId);
   });
+  document.querySelectorAll(".variant-chip").forEach((chip) => {
+    chip.classList.toggle("selected", chip.dataset.variantId === recommendation.variantId);
+  });
 
-  document.querySelector("#preview-button")?.addEventListener("click", generatePreviewImage);
+  bindPreviewControls();
 }
 
-async function generatePreviewImage() {
-  if (!imageDataUrl || !latestRecommendationPayload?.recommendation) return;
+function getPreviewOptions(payload) {
+  const rankings = Array.isArray(payload.rankings) ? payload.rankings : [];
+  return rankings.slice(0, MAX_PREVIEW_OPTIONS);
+}
 
-  const previewButton = document.querySelector("#preview-button");
-  const imageProviderInput = document.querySelector("#image-provider-input");
-  const previewContainer = document.querySelector("#generated-preview");
+function renderRankingItem(item, index, provider) {
+  return `
+    <li>
+      ${renderRankingImage(item)}
+      <div class="ranking-content">
+        <div>
+          <strong>${item.rank}. ${escapeHtml(formatRecommendationName(item))}</strong>
+          <span>${Math.round(item.score * 100)}% match${item.texture ? ` · ${escapeHtml(item.texture)}` : ""}</span>
+          <p>${escapeHtml(item.reason)}</p>
+        </div>
+        <div class="ranking-actions">
+          ${renderGenerateControl({ optionIndex: String(index), provider })}
+        </div>
+        <div class="generated-preview ranking-preview" data-preview-container="${escapeHtml(String(index))}" hidden></div>
+      </div>
+    </li>
+  `;
+}
+
+function renderGenerateControl({ optionIndex, provider }) {
+  return `
+    <div class="generate-control" data-preview-option-index="${escapeHtml(optionIndex)}">
+      <button class="preview-generate-button" type="button">Generate</button>
+      <label class="image-provider-field" aria-label="Image generation provider">
+        <select class="image-provider-input" name="imageProvider">
+          <option value="openai"${imageProviderSelected(provider, "openai")}>OpenAI image</option>
+          <option value="gemini"${imageProviderSelected(provider, "gemini")}>Gemini image</option>
+        </select>
+      </label>
+    </div>
+  `;
+}
+
+function bindPreviewControls() {
+  document.querySelectorAll(".preview-generate-button").forEach((button) => {
+    button.addEventListener("click", () => generatePreviewImage(button));
+  });
+}
+
+async function generatePreviewImage(triggerButton) {
+  if (!imageDataUrl || !latestRecommendationPayload) return;
+
+  const control = triggerButton.closest("[data-preview-option-index]");
+  const optionIndex = control?.dataset.previewOptionIndex;
+  const previewOption = getPreviewOption(optionIndex);
+  if (!control || !previewOption) return;
+
+  const imageProviderInput = control.querySelector(".image-provider-input");
+  const previewContainer = document.querySelector(
+    `[data-preview-container="${cssEscape(optionIndex)}"]`
+  );
+  if (!previewContainer) return;
+
   const selectedImageProvider = imageProviderInput?.value || "openai";
-  previewButton.disabled = true;
+  triggerButton.disabled = true;
   if (imageProviderInput) imageProviderInput.disabled = true;
-  previewButton.textContent = "Generating...";
+  triggerButton.textContent = "Generating...";
   previewContainer.hidden = false;
   previewContainer.innerHTML = `<p>Creating installed product preview with ${escapeHtml(formatImageProvider(selectedImageProvider))}...</p>`;
 
@@ -158,8 +198,9 @@ async function generatePreviewImage() {
       body: JSON.stringify({
         imageDataUrl,
         imageProvider: selectedImageProvider,
-        productId: latestRecommendationPayload.recommendation.productId,
-        recommendation: latestRecommendationPayload.recommendation
+        productId: previewOption.productId,
+        variantId: previewOption.variantId,
+        recommendation: previewOption
       })
     });
 
@@ -170,14 +211,14 @@ async function generatePreviewImage() {
       <figure>
         <img src="${payload.imageDataUrl}" alt="${escapeHtml(payload.displayName)} installed preview" />
         <figcaption>
-          <strong>${escapeHtml(payload.displayName)}</strong>
+          <strong>${escapeHtml(formatRecommendationName(payload))}</strong>
           <span>${escapeHtml(formatImageProvider(payload.provider))} · ${escapeHtml(payload.model)} · ${escapeHtml(payload.quality)} quality</span>
         </figcaption>
       </figure>
     `;
     jsonOutput.textContent = JSON.stringify(
       {
-        recommendation: latestRecommendationPayload,
+        previewSource: previewOption,
         generatedPreview: {
           ...payload,
           imageDataUrl: "[base64 image omitted from debug view]"
@@ -189,14 +230,26 @@ async function generatePreviewImage() {
   } catch (error) {
     previewContainer.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
   } finally {
-    previewButton.disabled = false;
+    triggerButton.disabled = false;
     if (imageProviderInput) imageProviderInput.disabled = false;
-    previewButton.textContent = "Generate";
+    triggerButton.textContent = "Generate";
   }
+}
+
+function getPreviewOption(optionIndex) {
+  if (optionIndex === "recommendation") return latestRecommendationPayload.recommendation;
+
+  const index = Number(optionIndex);
+  if (!Number.isInteger(index)) return null;
+  return latestRecommendationPayload.previewOptions[index] || null;
 }
 
 function formatImageProvider(provider) {
   return provider === "gemini" ? "Gemini" : "OpenAI";
+}
+
+function cssEscape(value) {
+  return String(value).replace(/["\\]/g, "\\$&");
 }
 
 function imageProviderSelected(recommendationProvider, imageProvider) {
@@ -204,6 +257,69 @@ function imageProviderSelected(recommendationProvider, imageProvider) {
     ? recommendationProvider
     : "openai";
   return supportedProvider === imageProvider ? " selected" : "";
+}
+
+function renderProductVariants(product) {
+  if (!Array.isArray(product.variants) || product.variants.length === 0) return "";
+
+  return `
+    <div class="variant-strip" aria-label="${escapeHtml(product.displayName)} variants">
+      ${product.variants
+        .map(
+          (variant) => `
+            <span class="variant-chip" data-variant-id="${escapeHtml(variant.variantId)}" title="${escapeHtml(
+              formatVariantSummary(variant)
+            )}">
+              ${
+                variant.swatchImageUrl
+                  ? `<img src="${variant.swatchImageUrl}" alt="${escapeHtml(variant.name || variant.color || "Variant swatch")}" />`
+                  : ""
+              }
+              <span>${escapeHtml(variant.name || variant.color || "Default")}</span>
+            </span>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderHeroImage(item) {
+  return `
+    <div class="hero-media">
+      <img class="product-image" src="${item.imageUrl}" alt="${escapeHtml(item.displayName)}" />
+      ${
+        item.swatchImageUrl
+          ? `<img class="swatch-image" src="${item.swatchImageUrl}" alt="${escapeHtml(item.variantName || "Selected swatch")}" />`
+          : ""
+      }
+    </div>
+  `;
+}
+
+function renderRankingImage(item) {
+  return `
+    <div class="ranking-media">
+      <img class="product-image" src="${item.imageUrl}" alt="${escapeHtml(item.displayName)}" />
+      ${
+        item.swatchImageUrl
+          ? `<img class="swatch-image" src="${item.swatchImageUrl}" alt="${escapeHtml(item.variantName || "Variant swatch")}" />`
+          : ""
+      }
+    </div>
+  `;
+}
+
+function formatRecommendationName(item) {
+  return [item.displayName, item.variantName && item.variantName !== "Default" ? item.variantName : null]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function formatVariantSummary(item) {
+  return [item.color || item.variantName, item.material, item.texture, item.opacity]
+    .filter((value) => value && value !== "unknown")
+    .join(" · ");
 }
 
 function renderAnalysis(analysis) {

@@ -14,6 +14,7 @@ const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const CATALOG_DIR = path.join(ROOT_DIR, "window-products-v1");
 const PORT = Number(process.env.PORT || 3000);
 const MAX_JSON_BYTES = 16 * 1024 * 1024;
+const MAX_RANKED_OPTIONS = 10;
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -103,6 +104,7 @@ async function handlePreviewImage(req, res) {
   const body = await readJson(req);
   const imageDataUrl = body.imageDataUrl;
   const productId = body.productId || body.recommendation?.productId;
+  const variantId = body.variantId || body.recommendation?.variantId;
 
   if (!imageDataUrl || !/^data:image\/(jpeg|jpg|png|webp|gif);base64,/.test(imageDataUrl)) {
     return sendJson(res, { error: "imageDataUrl must be a base64 image data URL." }, 400);
@@ -118,18 +120,27 @@ async function handlePreviewImage(req, res) {
     return sendJson(res, { error: `Unknown productId "${productId}".` }, 400);
   }
 
+  const variant = findVariant(product, variantId) || findVariant(product, product.defaultVariantId) || product.variants[0];
+  if (variantId && variant.variantId !== variantId) {
+    return sendJson(res, { error: `Unknown variantId "${variantId}" for productId "${productId}".` }, 400);
+  }
+
   const preview = await generateProductPreview({
     provider: body.imageProvider,
     model: body.imageModel,
     userImageDataUrl: imageDataUrl,
     product,
+    variant,
     recommendation: body.recommendation
   });
 
   sendJson(res, {
     productId: product.productId,
+    variantId: variant.variantId,
     category: product.category,
     displayName: product.displayName,
+    variantName: variant.name,
+    swatchImageUrl: variant.swatchImageUrl,
     productImageUrl: product.imageUrl,
     ...preview
   });
@@ -137,32 +148,52 @@ async function handlePreviewImage(req, res) {
 
 function normalizeRecommendation({ catalog, candidates, provider, model, result, rawText }) {
   const productsById = new Map(catalog.products.map((product) => [product.productId, product]));
-  const candidateIds = new Set(candidates.map((product) => product.productId));
+  const candidateVariantIds = new Set(
+    candidates.flatMap((product) => product.variants.map((variant) => variant.variantId))
+  );
   const rankings = Array.isArray(result.rankings) ? result.rankings : [];
 
   const enrichedRankings = rankings
-    .filter((ranking) => candidateIds.has(ranking.productId))
+    .filter((ranking) => {
+      const product = productsById.get(ranking.productId);
+      const variant = product && findVariant(product, ranking.variantId);
+      return Boolean(product && variant && candidateVariantIds.has(variant.variantId));
+    })
     .map((ranking, index) => {
       const product = productsById.get(ranking.productId);
+      const variant = findVariant(product, ranking.variantId) || product.variants[0];
       return {
         rank: Number(ranking.rank || index + 1),
         productId: product.productId,
-        variantId: ranking.variantId || product.variants[0].variantId,
+        variantId: variant.variantId,
         category: product.category,
         displayName: product.displayName,
+        variantName: variant.name,
+        color: variant.color,
+        colorFamily: variant.colorFamily,
+        material: variant.material,
+        texture: variant.texture,
+        opacity: variant.opacity,
         imageUrl: product.imageUrl,
+        swatchImageUrl: variant.swatchImageUrl,
         score: clampScore(ranking.score),
         reason: ranking.reason || "",
         tradeoffs: Array.isArray(ranking.tradeoffs) ? ranking.tradeoffs : []
       };
     })
-    .sort((a, b) => a.rank - b.rank);
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, MAX_RANKED_OPTIONS);
 
   const fallbackBest = enrichedRankings[0] || catalog.products[0];
   const recommendationProduct =
     productsById.get(result.recommendation?.productId) ||
     productsById.get(fallbackBest.productId) ||
     catalog.products[0];
+  const recommendationVariant =
+    findVariant(recommendationProduct, result.recommendation?.variantId) ||
+    findVariant(recommendationProduct, fallbackBest.variantId) ||
+    findVariant(recommendationProduct, recommendationProduct.defaultVariantId) ||
+    recommendationProduct.variants[0];
 
   return {
     provider,
@@ -170,19 +201,31 @@ function normalizeRecommendation({ catalog, candidates, provider, model, result,
     analysis: result.analysis || null,
     recommendation: {
       productId: recommendationProduct.productId,
-      variantId: result.recommendation?.variantId || recommendationProduct.variants[0].variantId,
+      variantId: recommendationVariant.variantId,
       category: recommendationProduct.category,
       displayName: recommendationProduct.displayName,
+      variantName: recommendationVariant.name,
+      color: recommendationVariant.color,
+      colorFamily: recommendationVariant.colorFamily,
+      material: recommendationVariant.material,
+      texture: recommendationVariant.texture,
+      opacity: recommendationVariant.opacity,
       imageUrl: recommendationProduct.imageUrl,
+      swatchImageUrl: recommendationVariant.swatchImageUrl,
       confidence: clampScore(result.recommendation?.confidence),
       reason: result.recommendation?.reason || enrichedRankings[0]?.reason || ""
     },
     rankings: enrichedRankings,
     debug: {
-      candidateCount: candidates.length,
+      candidateCount: candidates.reduce((count, product) => count + product.variants.length, 0),
       rawText
     }
   };
+}
+
+function findVariant(product, variantId) {
+  if (!product) return null;
+  return product.variants.find((variant) => variant.variantId === variantId) || null;
 }
 
 function publicCatalog() {
@@ -191,7 +234,14 @@ function publicCatalog() {
     catalogVersion: catalog.catalogVersion,
     products: catalog.products.map(({ imagePath, variants, ...product }) => ({
       ...product,
-      variants: variants.map(({ imagePath: _imagePath, ...variant }) => variant)
+      variants: variants.map(
+        ({
+          imagePath: _imagePath,
+          swatchImagePath: _swatchImagePath,
+          installedImagePath: _installedImagePath,
+          ...variant
+        }) => variant
+      )
     }))
   };
 }

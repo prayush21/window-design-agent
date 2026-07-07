@@ -121,30 +121,116 @@ function makeImageUrl(imagePath, catalogDir) {
   return `/products/${relativeParts.map(encodeURIComponent).join("/")}`;
 }
 
-function makeProduct({ category, productId, imagePath, variantId, catalogDir }) {
-  const normalizedProductId = productId || slugify(category);
-  const normalizedVariantId = variantId || `${normalizedProductId}-default`;
-  const imageUrl = makeImageUrl(imagePath, catalogDir);
+function makeAssetReference({ assetPath, productDir, catalogDir }) {
+  if (!assetPath) return null;
+  const resolvedPath = path.isAbsolute(assetPath) ? assetPath : path.join(productDir, assetPath);
+  return {
+    path: resolvedPath,
+    url: makeImageUrl(resolvedPath, catalogDir)
+  };
+}
+
+function readProductMetadata(productDir) {
+  const metadataPath = path.join(productDir, "product.json");
+  if (!fs.existsSync(metadataPath)) return null;
+
+  try {
+    return JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+  } catch (error) {
+    throw new Error(`Invalid product metadata at ${metadataPath}: ${error.message}`);
+  }
+}
+
+function normalizeVariant({ variant, productId, imagePath, imageUrl, productDir, catalogDir }) {
+  const variantId = variant.variantId || `${productId}-${slugify(variant.name || "default")}`;
+  const swatch = makeAssetReference({
+    assetPath: variant.swatchImage,
+    productDir,
+    catalogDir
+  });
+  const installed = makeAssetReference({
+    assetPath: variant.installedImage,
+    productDir,
+    catalogDir
+  });
 
   return {
-    productId: normalizedProductId,
-    category,
-    displayName: productId && productId !== slugify(category) ? `${category} ${productId}` : category,
+    variantId,
+    productId,
+    name: variant.name || variant.color || "Default",
+    color: variant.color ?? null,
+    colorFamily: variant.colorFamily ?? null,
+    warmth: variant.warmth ?? null,
+    fabric: variant.fabric ?? null,
+    material: variant.material ?? null,
+    texture: variant.texture ?? null,
+    opacity: variant.opacity ?? null,
+    styleTags: Array.isArray(variant.styleTags) ? variant.styleTags : [],
+    bestFor: Array.isArray(variant.bestFor) ? variant.bestFor : [],
+    avoidFor: Array.isArray(variant.avoidFor) ? variant.avoidFor : [],
+    imagePath: installed?.path || imagePath,
+    imageUrl: installed?.url || imageUrl,
+    swatchImagePath: swatch?.path || null,
+    swatchImageUrl: swatch?.url || null,
+    installedImagePath: installed?.path || null,
+    installedImageUrl: installed?.url || null
+  };
+}
+
+function makeProduct({ category, productId, imagePath, variantId, catalogDir, productDir }) {
+  const metadata = productDir ? readProductMetadata(productDir) : null;
+  const normalizedProductId = productId || slugify(category);
+  const metadataProductId = metadata?.productId || normalizedProductId;
+  const normalizedVariantId = variantId || `${metadataProductId}-default`;
+  const imageUrl = makeImageUrl(imagePath, catalogDir);
+  const variants =
+    Array.isArray(metadata?.variants) && metadata.variants.length > 0
+      ? metadata.variants.map((variant) =>
+          normalizeVariant({
+            variant,
+            productId: metadataProductId,
+            imagePath,
+            imageUrl,
+            productDir,
+            catalogDir
+          })
+        )
+      : [
+          {
+            variantId: normalizedVariantId,
+            productId: metadataProductId,
+            name: "Default",
+            color: null,
+            colorFamily: null,
+            warmth: null,
+            fabric: null,
+            material: null,
+            texture: null,
+            opacity: null,
+            styleTags: [],
+            bestFor: [],
+            avoidFor: [],
+            imagePath,
+            imageUrl,
+            swatchImagePath: null,
+            swatchImageUrl: null,
+            installedImagePath: null,
+            installedImageUrl: null
+          }
+        ];
+
+  return {
+    productId: metadataProductId,
+    category: metadata?.category || category,
+    displayName:
+      metadata?.displayName ||
+      (productId && productId !== slugify(category) ? `${category} ${productId}` : category),
+    description: metadata?.description || null,
+    defaultVariantId: metadata?.defaultVariantId || variants[0].variantId,
     familySlug: slugify(category),
     imagePath,
     imageUrl,
-    variants: [
-      {
-        variantId: normalizedVariantId,
-        productId: normalizedProductId,
-        color: null,
-        fabric: null,
-        material: null,
-        opacity: null,
-        imagePath,
-        imageUrl
-      }
-    ]
+    variants
   };
 }
 
@@ -163,7 +249,8 @@ export function loadCatalog(catalogDir = DEFAULT_CATALOG_DIR) {
           productId: slugify(category),
           imagePath: directImage,
           variantId: `${slugify(category)}-default`,
-          catalogDir
+          catalogDir,
+          productDir: categoryDir
         })
       );
     }
@@ -179,7 +266,8 @@ export function loadCatalog(catalogDir = DEFAULT_CATALOG_DIR) {
           productId,
           imagePath,
           variantId: `${productId}-default`,
-          catalogDir
+          catalogDir,
+          productDir
         })
       );
     }
@@ -205,7 +293,11 @@ if (process.argv[1] === __filename) {
       imagePath: path.relative(ROOT_DIR, imagePath),
       variants: variants.map((variant) => ({
         ...variant,
-        imagePath: path.relative(ROOT_DIR, variant.imagePath)
+        imagePath: path.relative(ROOT_DIR, variant.imagePath),
+        swatchImagePath: variant.swatchImagePath ? path.relative(ROOT_DIR, variant.swatchImagePath) : null,
+        installedImagePath: variant.installedImagePath
+          ? path.relative(ROOT_DIR, variant.installedImagePath)
+          : null
       }))
     }))
   };

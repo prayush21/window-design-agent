@@ -17,11 +17,13 @@ export async function generateProductPreview({
   model,
   userImageDataUrl,
   product,
+  variant,
   recommendation
 }) {
   const normalizedProvider = normalizeImageProvider(provider);
-  const prompt = buildPreviewPrompt({ product, recommendation });
-  const inputs = await normalizePreviewInputs({ userImageDataUrl, product });
+  const selectedVariant = variant || product.variants[0];
+  const prompt = buildPreviewPrompt({ product, variant: selectedVariant, recommendation });
+  const inputs = await normalizePreviewInputs({ userImageDataUrl, product, variant: selectedVariant });
 
   if (normalizedProvider === "gemini") {
     return generateGeminiProductPreview({ model, prompt, inputs });
@@ -38,11 +40,17 @@ function normalizeImageProvider(provider) {
   return normalized;
 }
 
-async function normalizePreviewInputs({ userImageDataUrl, product }) {
-  return {
+async function normalizePreviewInputs({ userImageDataUrl, product, variant }) {
+  const inputs = {
     userImage: await dataUrlToNormalizedBlob(userImageDataUrl),
-    productImage: await fileToNormalizedBlob(product.variants[0].imagePath)
+    productImage: await fileToNormalizedBlob(product.imagePath)
   };
+
+  if (variant?.swatchImagePath) {
+    inputs.swatchImage = await fileToNormalizedBlob(variant.swatchImagePath, "variant-swatch");
+  }
+
+  return inputs;
 }
 
 async function generateOpenAIProductPreview({ model, prompt, inputs }) {
@@ -58,6 +66,9 @@ async function generateOpenAIProductPreview({ model, prompt, inputs }) {
   form.append("model", selectedModel);
   form.append("image[]", inputs.userImage.blob, `room-window.${NORMALIZED_INPUT_EXTENSION}`);
   form.append("image[]", inputs.productImage.blob, `product-reference.${NORMALIZED_INPUT_EXTENSION}`);
+  if (inputs.swatchImage) {
+    form.append("image[]", inputs.swatchImage.blob, `variant-swatch.${NORMALIZED_INPUT_EXTENSION}`);
+  }
   form.append("prompt", prompt);
   form.append("size", size);
   form.append("quality", quality);
@@ -91,7 +102,8 @@ async function generateOpenAIProductPreview({ model, prompt, inputs }) {
     outputFormat,
     normalizedInputs: {
       roomImage: inputs.userImage.metadata,
-      productImage: inputs.productImage.metadata
+      productImage: inputs.productImage.metadata,
+      swatchImage: inputs.swatchImage?.metadata || null
     },
     imageDataUrl: `data:image/${outputFormat};base64,${base64}`,
     revisedPrompt: json?.data?.[0]?.revised_prompt || null,
@@ -120,7 +132,8 @@ async function generateGeminiProductPreview({ model, prompt, inputs }) {
             parts: [
               { text: prompt },
               toGeminiInlineData(inputs.userImage),
-              toGeminiInlineData(inputs.productImage)
+              toGeminiInlineData(inputs.productImage),
+              ...(inputs.swatchImage ? [toGeminiInlineData(inputs.swatchImage)] : [])
             ]
           }
         ]
@@ -150,7 +163,8 @@ async function generateGeminiProductPreview({ model, prompt, inputs }) {
     outputFormat,
     normalizedInputs: {
       roomImage: inputs.userImage.metadata,
-      productImage: inputs.productImage.metadata
+      productImage: inputs.productImage.metadata,
+      swatchImage: inputs.swatchImage?.metadata || null
     },
     imageDataUrl: `data:${mimeType};base64,${inlineData.data}`,
     revisedPrompt:
@@ -162,14 +176,20 @@ async function generateGeminiProductPreview({ model, prompt, inputs }) {
   };
 }
 
-function buildPreviewPrompt({ product, recommendation }) {
+function buildPreviewPrompt({ product, variant, recommendation }) {
+  const swatchInstruction = variant?.swatchImagePath
+    ? "Use the third image as the source of truth for the selected variant's color, material texture, and surface finish."
+    : "Use the selected variant metadata as the source of truth for color, material texture, and surface finish.";
+
   return `Edit the first image, which is the user's room and window photo, by realistically installing the window covering shown in the second image.
 
 If the user's window already has curtains, blinds, shades, rods, valances, tiebacks, or other window coverings, remove or replace those existing coverings cleanly before installing the selected product. Preserve the visible window frame, glass, trim, wall, sill, and surrounding room details as much as possible.
 
-Use the second image only as the product reference for appearance, structure, folds/slats, material impression, and proportions. The selected product is ${product.displayName}. Place it only on the actual window area, scaled and aligned to the window dimensions and perspective.
+Use the second image only as the product reference for shape, mounting style, appearance, structure, folds/slats, and proportions. ${swatchInstruction} The selected product is ${product.displayName}${variant?.name ? ` in ${variant.name}` : ""}. Place it only on the actual window area, scaled and aligned to the window dimensions and perspective.
 
 Preserve the user's original room, camera angle, window size, wall color, furniture, lighting direction, shadows, and overall realism. Do not change the room layout. Do not add labels, watermarks, people, or extra decor. The result should look like a believable product visualization after installation.
+
+Selected variant metadata: color ${variant?.color || "unknown"}, color family ${variant?.colorFamily || "unknown"}, material ${variant?.material || "unknown"}, texture ${variant?.texture || "unknown"}, opacity ${variant?.opacity || "unknown"}.
 
 Recommendation context: ${recommendation?.reason || "Best-ranked product for this room."}`;
 }
@@ -187,12 +207,12 @@ async function dataUrlToNormalizedBlob(dataUrl) {
   });
 }
 
-async function fileToNormalizedBlob(filePath) {
+async function fileToNormalizedBlob(filePath, source = "product-reference") {
   const bytes = fs.readFileSync(filePath);
   const mimeType = detectMimeTypeFromBytes(bytes) || getMimeType(filePath);
 
   return normalizeImageBytes(bytes, {
-    source: "product-reference",
+    source,
     sourceMimeType: mimeType
   });
 }

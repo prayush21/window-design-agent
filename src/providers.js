@@ -21,7 +21,7 @@ const RESPONSE_SCHEMA_PROMPT = `Return only valid JSON matching this shape:
   },
   "recommendation": {
     "productId": "one of the candidates",
-    "variantId": "one of the candidates",
+    "variantId": "one of the candidate variants",
     "category": "category",
     "confidence": 0.0,
     "reason": "plain-language reason"
@@ -30,7 +30,7 @@ const RESPONSE_SCHEMA_PROMPT = `Return only valid JSON matching this shape:
     {
       "rank": 1,
       "productId": "one of the candidates",
-      "variantId": "one of the candidates",
+      "variantId": "one of the candidate variants",
       "category": "category",
       "score": 0.0,
       "reason": "brief reason",
@@ -41,9 +41,9 @@ const RESPONSE_SCHEMA_PROMPT = `Return only valid JSON matching this shape:
 
 export const DEFAULT_RECOMMENDATION_PROMPT = `You are an interior-design product recommendation agent for window coverings.
 
-The first image is the user's room/window photo. The following images are candidate product images in the same order as the candidate list.
+The first image is the user's room/window photo. The following images are grouped in the same order as the candidate list. Each candidate group includes the product form/reference image first, followed by the variant swatch image when available.
 
-Rank the candidates by which product would look best in the user's room and window context. Consider visual harmony, room style, color compatibility, window shape, light/privacy needs visible in the photo, and practical fit. Do not invent product IDs.`;
+Rank the candidate variants by which exact product finish would look best in the user's room and window context. Return the top 10 ranked variants, or all variants when fewer than 10 are available. Consider visual harmony, room style, color compatibility, texture, material, window shape, light/privacy needs visible in the photo, and practical fit. Do not invent product IDs or variant IDs.`;
 
 export function normalizeProvider(provider) {
   const normalized = (provider || process.env.DESIGN_AGENT_PROVIDER || "openai").toLowerCase();
@@ -69,19 +69,27 @@ export async function rerankProducts({ provider, model, systemPrompt, userImageD
 }
 
 function buildRerankRequest({ systemPrompt, userImageDataUrl, candidates }) {
-  const productSummaries = candidates
-    .map((product, index) => {
-      const variant = product.variants[0];
+  const variantCandidates = makeVariantCandidates(candidates);
+  const productSummaries = variantCandidates
+    .map(({ product, variant, visualReferences }, index) => {
       return [
         `Candidate ${index + 1}`,
         `productId: ${product.productId}`,
         `variantId: ${variant.variantId}`,
         `category: ${product.category}`,
         `displayName: ${product.displayName}`,
+        `variantName: ${variant.name ?? "default"}`,
         `color: ${variant.color ?? "unknown"}`,
+        `colorFamily: ${variant.colorFamily ?? "unknown"}`,
+        `warmth: ${variant.warmth ?? "unknown"}`,
         `fabric: ${variant.fabric ?? "unknown"}`,
         `material: ${variant.material ?? "unknown"}`,
-        `opacity: ${variant.opacity ?? "unknown"}`
+        `texture: ${variant.texture ?? "unknown"}`,
+        `opacity: ${variant.opacity ?? "unknown"}`,
+        `styleTags: ${formatList(variant.styleTags)}`,
+        `bestFor: ${formatList(variant.bestFor)}`,
+        `avoidFor: ${formatList(variant.avoidFor)}`,
+        `visualReferences: ${visualReferences.join(", ")}`
       ].join("\n");
     })
     .join("\n\n");
@@ -97,8 +105,28 @@ ${RESPONSE_SCHEMA_PROMPT}`;
   return {
     prompt,
     userImageDataUrl,
-    productImageDataUrls: candidates.map((product) => imageFileToDataUrl(product.variants[0].imagePath))
+    productImageDataUrls: variantCandidates.flatMap(({ product, variant }) => {
+      const images = [imageFileToDataUrl(product.imagePath)];
+      if (variant.swatchImagePath) images.push(imageFileToDataUrl(variant.swatchImagePath));
+      return images;
+    })
   };
+}
+
+function makeVariantCandidates(products) {
+  return products.flatMap((product) =>
+    product.variants.map((variant) => ({
+      product,
+      variant,
+      visualReferences: variant.swatchImagePath
+        ? ["product form image", "variant swatch image"]
+        : ["product form image"]
+    }))
+  );
+}
+
+function formatList(values) {
+  return Array.isArray(values) && values.length > 0 ? values.join(", ") : "unknown";
 }
 
 async function callOpenAI({ model, prompt, userImageDataUrl, productImageDataUrls }) {
