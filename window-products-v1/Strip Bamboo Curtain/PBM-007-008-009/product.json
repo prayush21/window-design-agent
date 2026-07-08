@@ -1,0 +1,51 @@
+{
+  "productId": "PBM-007-008-009",
+  "category": "Strip Bamboo Curtain",
+  "displayName": "Strip Bamboo Curtain PBM-007-008-009",
+  "description": "Strip bamboo curtain with neutral and warm woven color options.",
+  "defaultVariantId": "PBM-007-008-009-white",
+  "variants": [
+    {
+      "variantId": "PBM-007-008-009-white",
+      "name": "White",
+      "color": "White",
+      "colorFamily": "white",
+      "warmth": "neutral",
+      "material": "bamboo",
+      "texture": "strip woven",
+      "opacity": "unknown",
+      "styleTags": ["airy", "natural", "light"],
+      "bestFor": ["bright rooms", "light walls", "casual natural interiors"],
+      "avoidFor": ["spaces needing strong contrast"],
+      "swatchImage": "swatches/white.jpg"
+    },
+    {
+      "variantId": "PBM-007-008-009-brown",
+      "name": "Brown",
+      "color": "Brown",
+      "colorFamily": "brown",
+      "warmth": "warm",
+      "material": "bamboo",
+      "texture": "strip woven",
+      "opacity": "unknown",
+      "styleTags": ["earthy", "warm", "natural"],
+      "bestFor": ["wood tones", "warm palettes", "rustic interiors"],
+      "avoidFor": ["cool monochrome rooms"],
+      "swatchImage": "swatches/brown.jpg"
+    },
+    {
+      "variantId": "PBM-007-008-009-light-grey",
+      "name": "Light Grey",
+      "color": "Light Grey",
+      "colorFamily": "gray",
+      "warmth": "cool",
+      "material": "bamboo",
+      "texture": "strip woven with variegated pattern",
+      "opacity": "unknown",
+      "styleTags": ["muted", "organic", "weathered"],
+      "bestFor": ["gray palettes", "soft contrast rooms", "casual modern spaces"],
+      "avoidFor": ["very warm beige rooms"],
+      "swatchImage": "swatches/light-grey.jpg"
+    }
+  ]
+}

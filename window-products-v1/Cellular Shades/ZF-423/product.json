@@ -1,0 +1,65 @@
+{
+  "productId": "ZF-423",
+  "category": "Cellular Shades",
+  "displayName": "Cellular Shades ZF-423",
+  "description": "Cellular shade fabric with soft neutral and muted color options.",
+  "defaultVariantId": "ZF-423-beige",
+  "variants": [
+    {
+      "variantId": "ZF-423-silver",
+      "name": "Silver",
+      "color": "Silver",
+      "colorFamily": "gray",
+      "warmth": "cool",
+      "material": "unknown",
+      "texture": "pleated woven cell",
+      "opacity": "unknown",
+      "styleTags": ["cool neutral", "soft contrast", "modern"],
+      "bestFor": ["gray palettes", "cool wall colors", "contemporary interiors"],
+      "avoidFor": ["very warm beige rooms"],
+      "swatchImage": "swatches/silver.jpg"
+    },
+    {
+      "variantId": "ZF-423-sage",
+      "name": "Sage",
+      "color": "Sage",
+      "colorFamily": "green",
+      "warmth": "neutral",
+      "material": "unknown",
+      "texture": "pleated woven cell",
+      "opacity": "unknown",
+      "styleTags": ["muted", "organic", "soft color"],
+      "bestFor": ["green-gray palettes", "natural interiors", "muted rooms"],
+      "avoidFor": ["high contrast black-and-white spaces"],
+      "swatchImage": "swatches/sage.jpg"
+    },
+    {
+      "variantId": "ZF-423-light-brown",
+      "name": "Light Brown",
+      "color": "Light Brown",
+      "colorFamily": "brown",
+      "warmth": "warm",
+      "material": "unknown",
+      "texture": "pleated woven cell",
+      "opacity": "unknown",
+      "styleTags": ["warm neutral", "earthy", "soft"],
+      "bestFor": ["wood tones", "warm walls", "transitional interiors"],
+      "avoidFor": ["cool monochrome rooms"],
+      "swatchImage": "swatches/light-brown.jpg"
+    },
+    {
+      "variantId": "ZF-423-beige",
+      "name": "Beige",
+      "color": "Beige",
+      "colorFamily": "beige",
+      "warmth": "warm",
+      "material": "unknown",
+      "texture": "pleated woven cell",
+      "opacity": "unknown",
+      "styleTags": ["soft", "warm neutral", "calm"],
+      "bestFor": ["cream walls", "warm palettes", "low contrast rooms"],
+      "avoidFor": ["cool industrial interiors"],
+      "swatchImage": "swatches/beige.jpg"
+    }
+  ]
+}

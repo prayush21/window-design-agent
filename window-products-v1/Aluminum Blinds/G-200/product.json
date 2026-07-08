@@ -1,0 +1,51 @@
+{
+  "productId": "G-200",
+  "category": "Aluminum Blinds",
+  "displayName": "Aluminum Blinds G-200",
+  "description": "Aluminum blinds with clean metallic and neutral color options.",
+  "defaultVariantId": "G-200-white",
+  "variants": [
+    {
+      "variantId": "G-200-white",
+      "name": "White",
+      "color": "White",
+      "colorFamily": "white",
+      "warmth": "neutral",
+      "material": "aluminum",
+      "texture": "smooth slatted",
+      "opacity": "unknown",
+      "styleTags": ["clean", "bright", "minimal"],
+      "bestFor": ["light walls", "bright rooms", "simple modern interiors"],
+      "avoidFor": ["spaces needing warm wood tones"],
+      "swatchImage": "swatches/white.jpg"
+    },
+    {
+      "variantId": "G-200-silver",
+      "name": "Silver",
+      "color": "Silver",
+      "colorFamily": "gray",
+      "warmth": "cool",
+      "material": "aluminum",
+      "texture": "metallic slatted",
+      "opacity": "unknown",
+      "styleTags": ["modern", "cool neutral", "crisp"],
+      "bestFor": ["gray palettes", "contemporary rooms", "cool wall colors"],
+      "avoidFor": ["very warm rustic interiors"],
+      "swatchImage": "swatches/silver.jpg"
+    },
+    {
+      "variantId": "G-200-natural",
+      "name": "Natural",
+      "color": "Natural",
+      "colorFamily": "beige",
+      "warmth": "warm",
+      "material": "aluminum",
+      "texture": "smooth slatted",
+      "opacity": "unknown",
+      "styleTags": ["soft neutral", "warm", "subtle"],
+      "bestFor": ["cream walls", "warm palettes", "low contrast rooms"],
+      "avoidFor": ["cool monochrome spaces"],
+      "swatchImage": "swatches/natural.jpg"
+    }
+  ]
+}

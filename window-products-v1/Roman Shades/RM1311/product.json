@@ -1,0 +1,51 @@
+{
+  "productId": "RM1311",
+  "category": "Roman Shades",
+  "displayName": "Roman Shades RM1311",
+  "description": "Roman shade fabric with soft neutral woven color options.",
+  "defaultVariantId": "RM1311-white",
+  "variants": [
+    {
+      "variantId": "RM1311-white",
+      "name": "White",
+      "color": "White",
+      "colorFamily": "white",
+      "warmth": "cool",
+      "material": "unknown",
+      "texture": "fine woven grid",
+      "opacity": "unknown",
+      "styleTags": ["clean", "airy", "minimal"],
+      "bestFor": ["light walls", "bright rooms", "soft neutral palettes"],
+      "avoidFor": ["spaces needing strong contrast"],
+      "swatchImage": "swatches/white.jpg"
+    },
+    {
+      "variantId": "RM1311-beige",
+      "name": "Beige",
+      "color": "Beige",
+      "colorFamily": "beige",
+      "warmth": "warm",
+      "material": "unknown",
+      "texture": "fine woven grid",
+      "opacity": "unknown",
+      "styleTags": ["warm neutral", "soft", "organic"],
+      "bestFor": ["wood tones", "cream walls", "warm palettes"],
+      "avoidFor": ["cool monochrome rooms"],
+      "swatchImage": "swatches/beige.jpg"
+    },
+    {
+      "variantId": "RM1311-grey",
+      "name": "Grey",
+      "color": "Grey",
+      "colorFamily": "gray",
+      "warmth": "cool",
+      "material": "unknown",
+      "texture": "fine woven striped weave",
+      "opacity": "unknown",
+      "styleTags": ["modern", "muted", "cool neutral"],
+      "bestFor": ["gray palettes", "modern interiors", "cool wall colors"],
+      "avoidFor": ["very warm beige rooms"],
+      "swatchImage": "swatches/grey.jpg"
+    }
+  ]
+}
