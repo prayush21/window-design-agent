@@ -1,0 +1,43 @@
+{
+  "productId": "RLS26001",
+  "sourceUrl": "https://example-vendor.com/products/blackout-roller-shade-rls26001",
+  "capturedOn": "2026-08-15",
+
+  "category": "Blackout Roller Shades",
+  "displayName": "Blackout Roller Shade RLS26001",
+  "description": "Copy the site's own product description here, 1-3 sentences. Don't write your own.",
+
+  "material": "polyester",
+  "opacityClass": "blackout",
+  "mountTypes": ["inside", "outside"],
+  "operation": ["cordless"],
+  "childSafe": true,
+
+  "sizeRangeMm": {
+    "minWidth": 300,
+    "maxWidth": 2400,
+    "minHeight": 300,
+    "maxHeight": 3000
+  },
+
+  "price": {
+    "amount": 89.0,
+    "currency": "USD",
+    "note": "base price as listed; leave null if the site only quotes after configuring"
+  },
+
+  "variants": [
+    {
+      "variantId": "RLS2600101B9",
+      "colorName": "Bleach White",
+      "sourceUrl": null,
+      "notes": ""
+    },
+    {
+      "variantId": "RLS2600104B9",
+      "colorName": "Charcoal",
+      "sourceUrl": null,
+      "notes": "swatch chip only available at 120px on the site"
+    }
+  ]
+}
