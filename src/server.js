@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getMimeType, loadCatalog, selectCandidates } from "./catalog.js";
+import { handleEvalRequest } from "./eval/label-api.js";
 import { generateProductPreview } from "./image-preview.js";
 import { DEFAULT_RECOMMENDATION_PROMPT, normalizeProvider, rerankProducts } from "./providers.js";
 
@@ -49,6 +50,10 @@ export function createAppServer() {
 
       if (req.method === "GET" && req.url?.startsWith("/products/")) {
         return serveProductImage(req, res);
+      }
+
+      if (await handleEvalRequest(req, res, { rootDir: ROOT_DIR })) {
+        return;
       }
 
       if (req.method === "GET") {
@@ -146,7 +151,7 @@ async function handlePreviewImage(req, res) {
   });
 }
 
-function normalizeRecommendation({ catalog, candidates, provider, model, result, rawText }) {
+export function normalizeRecommendation({ catalog, candidates, provider, model, result, rawText }) {
   const productsById = new Map(catalog.products.map((product) => [product.productId, product]));
   const candidateVariantIds = new Set(
     candidates.flatMap((product) => product.variants.map((variant) => variant.variantId))
@@ -184,16 +189,33 @@ function normalizeRecommendation({ catalog, candidates, provider, model, result,
     .sort((a, b) => a.rank - b.rank)
     .slice(0, MAX_RANKED_OPTIONS);
 
-  const fallbackBest = enrichedRankings[0] || catalog.products[0];
+  // Every fallback below is a case where the model did not give us a usable answer.
+  // Without these warnings a total failure is indistinguishable from a real
+  // recommendation: the client just sees catalog.products[0] at 0% confidence.
+  const warnings = [];
+  if (rankings.length === 0) warnings.push("model-returned-no-rankings");
+  if (rankings.length > 0 && enrichedRankings.length === 0) warnings.push("all-rankings-invalid");
+  if (enrichedRankings.length < rankings.length) {
+    warnings.push(`dropped-${rankings.length - enrichedRankings.length}-invalid-rankings`);
+  }
+  if (result.recommendation?.productId && !productsById.get(result.recommendation.productId)) {
+    warnings.push("recommended-product-not-in-catalog");
+  }
+
+  const fallbackBest = enrichedRankings[0] || null;
   const recommendationProduct =
     productsById.get(result.recommendation?.productId) ||
-    productsById.get(fallbackBest.productId) ||
+    (fallbackBest && productsById.get(fallbackBest.productId)) ||
     catalog.products[0];
   const recommendationVariant =
     findVariant(recommendationProduct, result.recommendation?.variantId) ||
-    findVariant(recommendationProduct, fallbackBest.variantId) ||
+    (fallbackBest && findVariant(recommendationProduct, fallbackBest.variantId)) ||
     findVariant(recommendationProduct, recommendationProduct.defaultVariantId) ||
     recommendationProduct.variants[0];
+
+  // Nothing the model said survived — the answer below is a default, not a choice.
+  const defaulted = !fallbackBest && !productsById.get(result.recommendation?.productId);
+  if (defaulted) warnings.push("recommendation-defaulted-to-first-catalog-product");
 
   return {
     provider,
@@ -216,8 +238,12 @@ function normalizeRecommendation({ catalog, candidates, provider, model, result,
       reason: result.recommendation?.reason || enrichedRankings[0]?.reason || ""
     },
     rankings: enrichedRankings,
+    warnings,
     debug: {
       candidateCount: candidates.reduce((count, product) => count + product.variants.length, 0),
+      returnedRankingCount: rankings.length,
+      keptRankingCount: enrichedRankings.length,
+      defaulted,
       rawText
     }
   };

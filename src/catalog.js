@@ -85,11 +85,6 @@ export function detectMimeTypeFromBytes(bytes) {
   return null;
 }
 
-export function imageFileToDataUrl(filePath) {
-  const bytes = fs.readFileSync(filePath);
-  return `data:${getMimeType(filePath)};base64,${bytes.toString("base64")}`;
-}
-
 function isImageFile(fileName) {
   return IMAGE_EXTENSIONS.has(path.extname(fileName).toLowerCase());
 }
@@ -235,14 +230,47 @@ function makeProduct({ category, productId, imagePath, variantId, catalogDir, pr
 }
 
 export function loadCatalog(catalogDir = DEFAULT_CATALOG_DIR) {
+  const fingerprint = fingerprintCatalogDir(catalogDir);
+  const cached = catalogCache.get(catalogDir);
+  if (cached && cached.fingerprint === fingerprint) return cached.catalog;
+
+  const catalog = readCatalog(catalogDir);
+  catalogCache.set(catalogDir, { fingerprint, catalog });
+  return catalog;
+}
+
+const catalogCache = new Map();
+
+// Cheap staleness check: directory and metadata mtimes only, no file reads or
+// JSON parsing. Enough to notice added, removed, or edited products.
+function fingerprintCatalogDir(catalogDir) {
+  if (!fs.existsSync(catalogDir)) return "missing";
+
+  const parts = [];
+  const visit = (dirPath) => {
+    parts.push(`${dirPath}:${fs.statSync(dirPath).mtimeMs}`);
+    for (const name of listDirectories(dirPath)) visit(path.join(dirPath, name));
+    const metadataPath = path.join(dirPath, "product.json");
+    if (fs.existsSync(metadataPath)) parts.push(`${metadataPath}:${fs.statSync(metadataPath).mtimeMs}`);
+  };
+
+  visit(catalogDir);
+  return parts.join("|");
+}
+
+function readCatalog(catalogDir) {
   const products = [];
   const categories = listDirectories(catalogDir);
 
   for (const category of categories) {
     const categoryDir = path.join(catalogDir, category);
     const directImage = findPrimaryImage(categoryDir);
+    const productDirs = listDirectories(categoryDir);
 
-    if (directImage) {
+    // A category-level image alongside real SKU folders is a family thumbnail, not
+    // a product. Emitting it created a metadata-less duplicate that competed in the
+    // ranking with no color, material, or texture at all.
+    if (directImage && productDirs.length === 0) {
       products.push(
         makeProduct({
           category,
@@ -255,7 +283,7 @@ export function loadCatalog(catalogDir = DEFAULT_CATALOG_DIR) {
       );
     }
 
-    for (const productId of listDirectories(categoryDir)) {
+    for (const productId of productDirs) {
       const productDir = path.join(categoryDir, productId);
       const imagePath = findPrimaryImage(productDir);
       if (!imagePath) continue;
