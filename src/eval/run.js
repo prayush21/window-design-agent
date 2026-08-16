@@ -11,6 +11,7 @@ import {
   rerankProducts
 } from "../providers.js";
 import { normalizeRecommendation } from "../server.js";
+import { BASELINE_RANKERS, runBaselineRanker } from "../baseline/rankers.js";
 import { evalPaths, listRoomPhotos, reconcileCases } from "./label-api.js";
 import { aggregate, computeVariance, scoreRun, withImpliedLabels } from "./metrics.js";
 import { printConsoleReport, printDiff, writeHtmlReport } from "./report.js";
@@ -21,6 +22,9 @@ const CATALOG_DIR = path.join(ROOT_DIR, "window-products-v1");
 
 const USAGE = `Usage: npm run eval -- [options]
 
+  --ranker <name>       model (default) | de2000-match | de2000-contrast | popular | random
+                        Baseline rankers make no API calls. A model that does not
+                        clearly beat all of them is not showing aesthetic judgement.
   --provider <name>     openai | gemini | anthropic   (default: env DESIGN_AGENT_PROVIDER, else gemini)
   --model <id>          model override
   --repeat <n>          runs per case, for variance measurement (default: 1)
@@ -62,7 +66,15 @@ export async function main(argv = process.argv.slice(2)) {
     return 1;
   }
 
-  const provider = normalizeProvider(args.provider);
+  const isBaseline = args.ranker !== "model";
+  if (isBaseline && !BASELINE_RANKERS.includes(args.ranker)) {
+    process.stderr.write(
+      `Unknown --ranker "${args.ranker}". Use: model, ${BASELINE_RANKERS.join(", ")}\n`
+    );
+    return 1;
+  }
+
+  const provider = isBaseline ? `baseline:${args.ranker}` : normalizeProvider(args.provider);
   const systemPrompt = args.promptFile
     ? fs.readFileSync(path.resolve(ROOT_DIR, args.promptFile), "utf8")
     : DEFAULT_RECOMMENDATION_PROMPT;
@@ -72,8 +84,9 @@ export async function main(argv = process.argv.slice(2)) {
   ).length;
 
   process.stdout.write(
-    `\nProvider ${provider}${args.model ? ` (${args.model})` : ""} · ${cases.length} cases · ` +
-      `${args.repeat} run${args.repeat === 1 ? "" : "s"} each · ${labeledCount}/${cases.length} labeled\n\n`
+    `\n${isBaseline ? "Baseline" : "Provider"} ${provider}${args.model ? ` (${args.model})` : ""} · ` +
+      `${cases.length} cases · ${args.repeat} run${args.repeat === 1 ? "" : "s"} each · ` +
+      `${labeledCount}/${cases.length} labeled${isBaseline ? " · no API calls" : ""}\n\n`
   );
 
   const jobs = cases.flatMap((testCase) =>
@@ -88,6 +101,7 @@ export async function main(argv = process.argv.slice(2)) {
         photoPath,
         catalog,
         provider,
+        ranker: args.ranker,
         model: args.model,
         systemPrompt,
         repeatIndex,
@@ -120,10 +134,16 @@ export async function main(argv = process.argv.slice(2)) {
     scoresByCase.get(score.caseId).push(score);
   }
 
+  const diagnostics = results.filter((entry) => entry.diagnostics).map((entry) => ({
+    caseId: entry.testCase.id,
+    ...entry.diagnostics
+  }));
+
   const report = {
     runId: new Date().toISOString().replace(/[:.]/g, "-"),
     startedAt: new Date().toISOString(),
     provider,
+    ranker: args.ranker,
     model: args.model || null,
     repeat: args.repeat,
     catalogFingerprint,
@@ -131,8 +151,18 @@ export async function main(argv = process.argv.slice(2)) {
     summary: aggregate(scores),
     variance: computeVariance(scoresByCase),
     scores,
+    diagnostics,
     errors: errors.map((entry) => ({ caseId: entry.testCase.id, error: entry.error }))
   };
+
+  const coverage = diagnostics.filter((entry) => typeof entry.colorCoverage === "number");
+  if (coverage.length > 0) {
+    const worst = Math.min(...coverage.map((entry) => entry.colorCoverage));
+    process.stdout.write(
+      `\n  colour source available for ${(worst * 100).toFixed(0)}% of variants` +
+        `${worst < 1 ? " — variants without a swatch were excluded, not guessed" : ""}\n`
+    );
+  }
 
   const runDir = path.join(paths.runsDir, report.runId);
   fs.mkdirSync(runDir, { recursive: true });
@@ -163,6 +193,7 @@ async function runOnce({
   photoPath,
   catalog,
   provider,
+  ranker,
   model,
   systemPrompt,
   repeatIndex,
@@ -170,6 +201,46 @@ async function runOnce({
   cacheDir,
   fresh
 }) {
+  const candidates = selectCandidates(catalog, catalog.products.length);
+
+  // Baselines are local and cheap, so they skip the response cache entirely —
+  // which also means --repeat measures their true determinism rather than
+  // replaying one stored answer.
+  if (ranker !== "model") {
+    const baseline = await runBaselineRanker({
+      ranker,
+      catalog,
+      candidates,
+      roomImagePath: photoPath,
+      caseId: testCase.id,
+      seed: repeatIndex + 1
+    });
+
+    const normalized = normalizeRecommendation({
+      catalog,
+      candidates,
+      provider,
+      model: ranker,
+      result: baseline.result,
+      rawText: ""
+    });
+
+    return {
+      testCase,
+      cached: false,
+      diagnostics: baseline.diagnostics,
+      score: scoreRun({
+        testCase,
+        catalog,
+        raw: baseline.result,
+        normalized,
+        latencyMs: null,
+        usage: null,
+        requestStats: null
+      })
+    };
+  }
+
   const photoBytes = fs.readFileSync(photoPath);
   // repeatIndex is part of the key so --repeat measures real variance
   // instead of replaying one cached response N times.
@@ -195,7 +266,6 @@ async function runOnce({
     payload = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
     cached = true;
   } else {
-    const candidates = selectCandidates(catalog, catalog.products.length);
     const reranked = await rerankProducts({
       provider,
       model,
@@ -216,7 +286,6 @@ async function runOnce({
     fs.writeFileSync(cacheFile, `${JSON.stringify(payload, null, 2)}\n`);
   }
 
-  const candidates = selectCandidates(catalog, catalog.products.length);
   const normalized = normalizeRecommendation({
     catalog,
     candidates,
@@ -286,6 +355,7 @@ function hash(value) {
 
 function parseArgs(argv) {
   const args = {
+    ranker: "model",
     provider: process.env.DESIGN_AGENT_PROVIDER || "gemini",
     model: null,
     repeat: 1,
@@ -302,6 +372,7 @@ function parseArgs(argv) {
     const next = () => argv[(i += 1)];
 
     if (flag === "--help" || flag === "-h") args.help = true;
+    else if (flag === "--ranker") args.ranker = next();
     else if (flag === "--provider") args.provider = next();
     else if (flag === "--model") args.model = next();
     else if (flag === "--repeat") args.repeat = Math.max(1, Number(next()) || 1);

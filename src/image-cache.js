@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import sharp from "sharp";
+import { describeDecodeFailure } from "./catalog.js";
 
 // Catalog images are identical across every request from every user, but were
 // re-read and re-base64'd on each call. Memoize the encoded form, keyed on
@@ -51,18 +52,23 @@ export async function encodeRoomImage(dataUrl, maxDimension = RANKING_IMAGE_SIZE
 }
 
 async function encodeBuffer(bytes, maxDimension) {
-  const output = await sharp(bytes, { animated: false, limitInputPixels: 64_000_000 })
-    .rotate()
-    .resize({
-      width: maxDimension,
-      height: maxDimension,
-      fit: "inside",
-      withoutEnlargement: true
-    })
-    .flatten({ background: "#ffffff" })
-    .toColourspace("srgb")
-    .jpeg(JPEG_OPTIONS)
-    .toBuffer();
+  let output;
+  try {
+    output = await sharp(bytes, { animated: false, limitInputPixels: 64_000_000 })
+      .rotate()
+      .resize({
+        width: maxDimension,
+        height: maxDimension,
+        fit: "inside",
+        withoutEnlargement: true
+      })
+      .flatten({ background: "#ffffff" })
+      .toColourspace("srgb")
+      .jpeg(JPEG_OPTIONS)
+      .toBuffer();
+  } catch (error) {
+    throw new Error(describeDecodeFailure(bytes, error));
+  }
 
   const base64 = output.toString("base64");
   return {

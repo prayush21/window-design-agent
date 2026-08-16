@@ -82,7 +82,43 @@ export function detectMimeTypeFromBytes(bytes) {
     return "image/gif";
   }
 
+  const heif = detectHeifBrand(bytes);
+  if (heif) return heif;
+
   return null;
+}
+
+// iPhones hand out HEIC routinely, and files arrive named .jpg. Sniffing the ISO
+// media brand lets us fail with a useful message instead of a decode error from
+// deep inside the image pipeline.
+const HEIC_BRANDS = new Set(["heic", "heix", "heim", "heis", "hevc", "hevx", "hevm", "hevs", "mif1", "msf1"]);
+
+/**
+ * Turns an image-decode failure into something a person can act on. A HEIC file
+ * renamed .jpg passes every extension and MIME check, then fails inside libvips
+ * with "bad seek to 3205033", which tells a user nothing.
+ */
+export function describeDecodeFailure(bytes, error) {
+  const detected = detectMimeTypeFromBytes(bytes);
+
+  if (detected === "image/heic" || detected === "image/avif") {
+    const label = detected === "image/heic" ? "HEIC/HEIF" : "AVIF";
+    return (
+      `This looks like a ${label} image (common for iPhone photos), which this server ` +
+      `cannot decode. Convert it to JPEG or PNG and upload again.`
+    );
+  }
+
+  return `Could not decode this image: ${error.message}`;
+}
+
+function detectHeifBrand(bytes) {
+  if (bytes.length < 12) return null;
+  if (String.fromCharCode(bytes[4], bytes[5], bytes[6], bytes[7]) !== "ftyp") return null;
+
+  const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+  if (brand === "avif" || brand === "avis") return "image/avif";
+  return HEIC_BRANDS.has(brand) ? "image/heic" : null;
 }
 
 function isImageFile(fileName) {
