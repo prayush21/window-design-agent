@@ -1,0 +1,2 @@
+Put the in-room / lifestyle photo for each colorway here.
+Filename must match the variantId in product.json.

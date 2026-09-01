@@ -82,12 +82,43 @@ export function detectMimeTypeFromBytes(bytes) {
     return "image/gif";
   }
 
+  const heif = detectHeifBrand(bytes);
+  if (heif) return heif;
+
   return null;
 }
 
-export function imageFileToDataUrl(filePath) {
-  const bytes = fs.readFileSync(filePath);
-  return `data:${getMimeType(filePath)};base64,${bytes.toString("base64")}`;
+// iPhones hand out HEIC routinely, and files arrive named .jpg. Sniffing the ISO
+// media brand lets us fail with a useful message instead of a decode error from
+// deep inside the image pipeline.
+const HEIC_BRANDS = new Set(["heic", "heix", "heim", "heis", "hevc", "hevx", "hevm", "hevs", "mif1", "msf1"]);
+
+/**
+ * Turns an image-decode failure into something a person can act on. A HEIC file
+ * renamed .jpg passes every extension and MIME check, then fails inside libvips
+ * with "bad seek to 3205033", which tells a user nothing.
+ */
+export function describeDecodeFailure(bytes, error) {
+  const detected = detectMimeTypeFromBytes(bytes);
+
+  if (detected === "image/heic" || detected === "image/avif") {
+    const label = detected === "image/heic" ? "HEIC/HEIF" : "AVIF";
+    return (
+      `This looks like a ${label} image (common for iPhone photos), which this server ` +
+      `cannot decode. Convert it to JPEG or PNG and upload again.`
+    );
+  }
+
+  return `Could not decode this image: ${error.message}`;
+}
+
+function detectHeifBrand(bytes) {
+  if (bytes.length < 12) return null;
+  if (String.fromCharCode(bytes[4], bytes[5], bytes[6], bytes[7]) !== "ftyp") return null;
+
+  const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+  if (brand === "avif" || brand === "avis") return "image/avif";
+  return HEIC_BRANDS.has(brand) ? "image/heic" : null;
 }
 
 function isImageFile(fileName) {
@@ -235,14 +266,47 @@ function makeProduct({ category, productId, imagePath, variantId, catalogDir, pr
 }
 
 export function loadCatalog(catalogDir = DEFAULT_CATALOG_DIR) {
+  const fingerprint = fingerprintCatalogDir(catalogDir);
+  const cached = catalogCache.get(catalogDir);
+  if (cached && cached.fingerprint === fingerprint) return cached.catalog;
+
+  const catalog = readCatalog(catalogDir);
+  catalogCache.set(catalogDir, { fingerprint, catalog });
+  return catalog;
+}
+
+const catalogCache = new Map();
+
+// Cheap staleness check: directory and metadata mtimes only, no file reads or
+// JSON parsing. Enough to notice added, removed, or edited products.
+function fingerprintCatalogDir(catalogDir) {
+  if (!fs.existsSync(catalogDir)) return "missing";
+
+  const parts = [];
+  const visit = (dirPath) => {
+    parts.push(`${dirPath}:${fs.statSync(dirPath).mtimeMs}`);
+    for (const name of listDirectories(dirPath)) visit(path.join(dirPath, name));
+    const metadataPath = path.join(dirPath, "product.json");
+    if (fs.existsSync(metadataPath)) parts.push(`${metadataPath}:${fs.statSync(metadataPath).mtimeMs}`);
+  };
+
+  visit(catalogDir);
+  return parts.join("|");
+}
+
+function readCatalog(catalogDir) {
   const products = [];
   const categories = listDirectories(catalogDir);
 
   for (const category of categories) {
     const categoryDir = path.join(catalogDir, category);
     const directImage = findPrimaryImage(categoryDir);
+    const productDirs = listDirectories(categoryDir);
 
-    if (directImage) {
+    // A category-level image alongside real SKU folders is a family thumbnail, not
+    // a product. Emitting it created a metadata-less duplicate that competed in the
+    // ranking with no color, material, or texture at all.
+    if (directImage && productDirs.length === 0) {
       products.push(
         makeProduct({
           category,
@@ -255,7 +319,7 @@ export function loadCatalog(catalogDir = DEFAULT_CATALOG_DIR) {
       );
     }
 
-    for (const productId of listDirectories(categoryDir)) {
+    for (const productId of productDirs) {
       const productDir = path.join(categoryDir, productId);
       const imagePath = findPrimaryImage(productDir);
       if (!imagePath) continue;

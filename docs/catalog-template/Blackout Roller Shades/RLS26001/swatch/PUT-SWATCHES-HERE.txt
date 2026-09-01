@@ -1,0 +1,3 @@
+Put the flat colour chip from the site colour picker here.
+Same filename as the matching file in ../room/.
+Grab the largest version available, not the thumbnail.

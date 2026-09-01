@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Eval labeling</title>
+    <link rel="stylesheet" href="/eval-label.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="bar-left">
+        <strong>Eval labeling</strong>
+        <span id="progress" class="muted">loading…</span>
+      </div>
+      <div class="bar-right">
+        <span id="save-state" class="muted">saved</span>
+        <button id="prev-button" type="button">← Prev</button>
+        <span id="position" class="muted">0 / 0</span>
+        <button id="next-button" type="button">Next →</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="room-pane">
+        <div class="room-frame">
+          <img id="room-image" alt="" />
+        </div>
+        <h2 id="case-id">—</h2>
+
+        <label class="field">
+          <span>Notes</span>
+          <textarea id="notes-input" rows="3" placeholder="warm oak floors, cream walls, south-facing"></textarea>
+        </label>
+
+        <label class="checkbox">
+          <input id="expect-failure-input" type="checkbox" />
+          <span>Adversarial case — no confident recommendation expected</span>
+        </label>
+
+        <div class="legend">
+          <p><strong>Click</strong> a swatch to cycle: unlabeled → <span class="chip good">acceptable</span> → <span class="chip bad">unacceptable</span> → unlabeled</p>
+          <p><strong>Shift-click</strong> to mark <span class="chip ideal">★ ideal</span> (implies acceptable)</p>
+          <p class="muted">The unacceptable set carries the most signal — tag what would be clearly wrong even when you are unsure which neutral is best.</p>
+          <p class="muted">← / → switch cases. Saves automatically.</p>
+        </div>
+
+        <div class="counts">
+          <span id="count-acceptable">0 acceptable</span>
+          <span id="count-unacceptable">0 unacceptable</span>
+          <span id="count-ideal">0 ideal</span>
+        </div>
+      </section>
+
+      <section class="catalog-pane" id="catalog-pane"></section>
+    </main>
+
+    <nav class="case-strip" id="case-strip"></nav>
+
+    <script src="/eval-label.js" type="module"></script>
+  </body>
+</html>

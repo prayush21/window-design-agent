@@ -1,0 +1,670 @@
+<title>Vendor Catalog Spec</title>
+<style>
+  /* Light palette — complete definition lives here, on bare :root */
+  :root {
+    --ground: #FBFAF7;
+    --surface: #FFFFFF;
+    --surface-sunk: #F3F1EC;
+    --ink: #1C1F24;
+    --ink-soft: #5C636C;
+    --ink-faint: #8A9099;
+    --rule: #E3E0D9;
+    --rule-strong: #CFCBC2;
+    --accent: #2F5D62;
+    --accent-soft: #E4EDED;
+    --flag: #97671F;
+    --flag-soft: #F6EEE0;
+    --shade-0: #FFFFFF;
+    --shade-1: #E8E4DB;
+    --shade-2: #A9A399;
+    --shade-3: #2A2823;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14171A;
+      --surface: #1B1F23;
+      --surface-sunk: #22272C;
+      --ink: #E8E9EA;
+      --ink-soft: #A2A9B1;
+      --ink-faint: #737C85;
+      --rule: #2C3238;
+      --rule-strong: #3D454C;
+      --accent: #7FBCC0;
+      --accent-soft: #1E3538;
+      --flag: #D3A263;
+      --flag-soft: #33291A;
+      --shade-0: #F2EFE8;
+      --shade-1: #B8B2A6;
+      --shade-2: #6A655C;
+      --shade-3: #171512;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #14171A;
+    --surface: #1B1F23;
+    --surface-sunk: #22272C;
+    --ink: #E8E9EA;
+    --ink-soft: #A2A9B1;
+    --ink-faint: #737C85;
+    --rule: #2C3238;
+    --rule-strong: #3D454C;
+    --accent: #7FBCC0;
+    --accent-soft: #1E3538;
+    --flag: #D3A263;
+    --flag-soft: #33291A;
+    --shade-0: #F2EFE8;
+    --shade-1: #B8B2A6;
+    --shade-2: #6A655C;
+    --shade-3: #171512;
+  }
+
+  :root {
+    --serif: Charter, "Bitstream Charter", "Iowan Old Style", "Source Serif Pro", Georgia, serif;
+    --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 28px 120px;
+  }
+
+  @media (min-width: 1000px) {
+    .shell {
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 56px;
+      padding-right: 40px;
+    }
+  }
+
+  /* ---- masthead ---- */
+  .masthead {
+    grid-column: 1 / -1;
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(34px, 5.2vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 20px;
+  }
+
+  .standfirst {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0;
+  }
+
+  .deliverables {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 32px;
+  }
+
+  .deliverable {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    min-width: 190px;
+    flex: 1 1 190px;
+  }
+
+  .deliverable code {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .deliverable span {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* ---- side nav ---- */
+  .sidenav { display: none; }
+
+  @media (min-width: 1000px) {
+    .sidenav {
+      display: block;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      padding-top: 52px;
+    }
+    .sidenav ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      border-left: 1px solid var(--rule);
+    }
+    .sidenav a {
+      display: block;
+      padding-left: 14px;
+      margin-left: -1px;
+      border-left: 2px solid transparent;
+      font-size: 13.5px;
+      line-height: 1.35;
+      color: var(--ink-soft);
+      text-decoration: none;
+    }
+    .sidenav a:hover,
+    .sidenav a:focus-visible { color: var(--accent); border-left-color: var(--accent); }
+  }
+
+  /* ---- body ---- */
+  main { min-width: 0; padding-top: 52px; }
+
+  section { margin-bottom: 60px; scroll-margin-top: 24px; }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 27px;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0 0 6px;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-weight: 650;
+    font-size: 15.5px;
+    letter-spacing: 0.005em;
+    margin: 34px 0 8px;
+  }
+
+  p { max-width: 68ch; margin: 0 0 14px; }
+  p.lede { color: var(--ink-soft); margin-bottom: 26px; }
+
+  a { color: var(--accent); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.875em;
+    background: var(--surface-sunk);
+    padding: 1.5px 5px;
+    border-radius: 2px;
+  }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 14px;
+  }
+
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  /* ---- tables ---- */
+  .scroller { overflow-x: auto; margin: 0 0 10px; border: 1px solid var(--rule); border-radius: 3px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--surface);
+    font-variant-numeric: tabular-nums;
+  }
+
+  thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--rule-strong);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  td.field { white-space: nowrap; }
+
+  td.field code { background: none; padding: 0; font-size: 13px; font-weight: 600; color: var(--ink); }
+
+  td.type { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+
+  td.note { color: var(--ink-soft); font-size: 13.5px; min-width: 260px; }
+
+  /* required marker — a word, because a tick is not information */
+  .req {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2.5px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .req.flag { color: var(--flag); background: var(--flag-soft); }
+
+  td.req-cell { white-space: nowrap; width: 1%; }
+
+  /* ---- priority callout ---- */
+  .priority {
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 26px 30px;
+  }
+
+  .priority h2 { font-size: 21px; margin-bottom: 4px; }
+
+  .priority ol {
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: pri;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .priority li {
+    counter-increment: pri;
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 14px;
+    align-items: baseline;
+  }
+
+  .priority li::before {
+    content: counter(pri);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--accent);
+    padding-bottom: 2px;
+  }
+
+  .priority li strong { font-weight: 650; }
+  .priority li span { display: block; color: var(--ink-soft); font-size: 14px; }
+
+  /* ---- opacity scale: the subject's own gradient, carrying real values ---- */
+  .opacity-scale {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 4px 0 18px;
+  }
+
+  .opacity-step { display: flex; flex-direction: column; gap: 7px; }
+
+  .opacity-chip {
+    height: 46px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+  }
+
+  .opacity-step code {
+    background: none;
+    padding: 0;
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .opacity-step em {
+    font-style: normal;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  /* ---- inline colour chips ---- */
+  .chips { display: inline-flex; gap: 6px; align-items: center; vertical-align: middle; }
+
+  .chip {
+    width: 15px;
+    height: 15px;
+    border-radius: 2px;
+    border: 1px solid var(--rule-strong);
+    display: inline-block;
+  }
+
+  ul.plain { margin: 0 0 14px; padding-left: 20px; max-width: 68ch; }
+  ul.plain li { margin-bottom: 7px; }
+
+  .files {
+    display: grid;
+    gap: 2px;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+  }
+
+  .files div { display: grid; grid-template-columns: minmax(230px, auto) minmax(160px, 1fr) auto; gap: 18px; white-space: nowrap; }
+  .files span:nth-child(2) { color: var(--ink-soft); }
+  .files span:nth-child(3) { color: var(--ink-faint); }
+
+  .negative {
+    border-left: 2px solid var(--rule-strong);
+    padding-left: 22px;
+  }
+
+  footer {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 22px;
+    color: var(--ink-faint);
+    font-size: 13.5px;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="shell">
+  <header class="masthead">
+    <p class="kicker">Product data request</p>
+    <h1>Window covering catalog data</h1>
+    <p class="standfirst">
+      What we need to list your products and match them accurately to a customer's room.
+      Two spreadsheets and an image folder. This is data you almost certainly already hold in a
+      PIM, ERP, or spec sheet — we are not asking you to write new content.
+    </p>
+    <div class="deliverables">
+      <div class="deliverable"><code>products.csv</code><span>One row per product line</span></div>
+      <div class="deliverable"><code>variants.csv</code><span>One row per colorway</span></div>
+      <div class="deliverable"><code>images/</code><span>Named to match variant IDs</span></div>
+    </div>
+  </header>
+
+  <nav class="sidenav" aria-label="Sections">
+    <ol>
+      <li><a href="#priority">Start here</a></li>
+      <li><a href="#products">products.csv</a></li>
+      <li><a href="#variants">variants.csv</a></li>
+      <li><a href="#images">Images</a></li>
+      <li><a href="#color">Color accuracy</a></li>
+      <li><a href="#skip">What to skip</a></li>
+      <li><a href="#updates">Updates</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="priority">
+      <div class="priority">
+        <h2>If you can only send three things</h2>
+        <p class="lede" style="margin-bottom:0">
+          Not every field will exist in your system. These three determine whether a
+          recommendation is possible at all; everything else improves its quality.
+        </p>
+        <ol>
+          <li>
+            <div>
+              <strong>A flat swatch image per colorway, named by <code>variant_id</code></strong>
+              <span>The single most valuable item in this request.</span>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Opacity class</strong>
+              <span>Sheer, light-filtering, room-darkening, or blackout.</span>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Minimum and maximum width and height</strong>
+              <span>Whether the product physically fits the window.</span>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="format">
+      <h2>File format</h2>
+      <p class="lede">
+        CSV or XLSX, UTF-8, first row as headers, using the exact column names below. If you
+        already export from a PIM in a different shape, send that instead along with a column
+        glossary — we will map it. Leave a field blank rather than guessing: a blank is
+        information, a guess is not.
+      </p>
+    </section>
+
+    <section id="products">
+      <h2>products.csv</h2>
+      <p class="lede">One row per product line.</p>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Column</th><th>Type</th><th></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="field"><code>product_id</code></td><td class="type">string</td><td class="req-cell"><span class="req">required</span></td><td class="note">Your stable SKU or style code. Must never change between updates.</td></tr>
+            <tr><td class="field"><code>product_name</code></td><td class="type">string</td><td class="req-cell"><span class="req">required</span></td><td class="note">Customer-facing name</td></tr>
+            <tr><td class="field"><code>category</code></td><td class="type">enum</td><td class="req-cell"><span class="req">required</span></td><td class="note">See the category list below</td></tr>
+            <tr><td class="field"><code>collection</code></td><td class="type">string</td><td class="req-cell"></td><td class="note">Product family or range name</td></tr>
+            <tr><td class="field"><code>description</code></td><td class="type">text</td><td class="req-cell"></td><td class="note">One to three sentences, customer-facing</td></tr>
+            <tr><td class="field"><code>mount_types</code></td><td class="type">enum list</td><td class="req-cell"><span class="req">required</span></td><td class="note"><code>inside</code>, <code>outside</code>, <code>ceiling</code> — pipe-separated for multiple</td></tr>
+            <tr><td class="field"><code>operation</code></td><td class="type">enum list</td><td class="req-cell"><span class="req">required</span></td><td class="note"><code>cordless</code>, <code>corded</code>, <code>continuous_loop</code>, <code>wand</code>, <code>motorized</code></td></tr>
+            <tr><td class="field"><code>child_safe</code></td><td class="type">boolean</td><td class="req-cell"><span class="req">required</span></td><td class="note">Cordless, or compliant with child-safety standards</td></tr>
+            <tr><td class="field"><code>min_width_mm</code></td><td class="type">integer</td><td class="req-cell"><span class="req">required</span></td><td class="note">Smallest orderable width</td></tr>
+            <tr><td class="field"><code>max_width_mm</code></td><td class="type">integer</td><td class="req-cell"><span class="req">required</span></td><td class="note">Largest orderable width</td></tr>
+            <tr><td class="field"><code>min_height_mm</code></td><td class="type">integer</td><td class="req-cell"><span class="req">required</span></td><td class="note"></td></tr>
+            <tr><td class="field"><code>max_height_mm</code></td><td class="type">integer</td><td class="req-cell"><span class="req">required</span></td><td class="note"></td></tr>
+            <tr><td class="field"><code>msrp</code></td><td class="type">decimal</td><td class="req-cell"></td><td class="note">Base price — or use <code>price_tier</code> if you'd rather not share figures</td></tr>
+            <tr><td class="field"><code>price_tier</code></td><td class="type">enum</td><td class="req-cell"></td><td class="note"><code>budget</code>, <code>mid</code>, <code>premium</code></td></tr>
+            <tr><td class="field"><code>currency</code></td><td class="type">string</td><td class="req-cell"></td><td class="note">ISO code, e.g. <code>USD</code></td></tr>
+            <tr><td class="field"><code>warranty_years</code></td><td class="type">integer</td><td class="req-cell"></td><td class="note"></td></tr>
+            <tr><td class="field"><code>care_instructions</code></td><td class="type">text</td><td class="req-cell"></td><td class="note"></td></tr>
+            <tr><td class="field"><code>status</code></td><td class="type">enum</td><td class="req-cell"></td><td class="note"><code>active</code>, <code>discontinued</code>, <code>made_to_order</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Category values</h3>
+      <p>
+        <code>roller_shade</code>, <code>solar_shade</code>, <code>roman_shade</code>,
+        <code>cellular_shade</code>, <code>zebra_shade</code>, <code>vertical_blind</code>,
+        <code>aluminum_blind</code>, <code>wood_blind</code>, <code>faux_wood_blind</code>,
+        <code>vinyl_blind</code>, <code>drapery_panel</code>, <code>sheer_curtain</code>,
+        <code>outdoor_shade</code>, <code>shutter</code>. If a product doesn't fit any of these,
+        send your own label and we'll map it.
+      </p>
+    </section>
+
+    <section id="variants">
+      <h2>variants.csv</h2>
+      <p class="lede">One row per colorway. This is the more important of the two files.</p>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Column</th><th>Type</th><th></th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="field"><code>variant_id</code></td><td class="type">string</td><td class="req-cell"><span class="req">required</span></td><td class="note">Unique across your whole catalog. Image filenames must match this.</td></tr>
+            <tr><td class="field"><code>product_id</code></td><td class="type">string</td><td class="req-cell"><span class="req">required</span></td><td class="note">Must match a row in <code>products.csv</code></td></tr>
+            <tr><td class="field"><code>color_name</code></td><td class="type">string</td><td class="req-cell"><span class="req">required</span></td><td class="note">Your name for it, e.g. <code>Dove Gray</code></td></tr>
+            <tr><td class="field"><code>color_family</code></td><td class="type">enum</td><td class="req-cell"><span class="req">required</span></td><td class="note">See the list below</td></tr>
+            <tr><td class="field"><code>color_hex</code></td><td class="type">string</td><td class="req-cell"><span class="req flag">high value</span></td><td class="note"><code>#RRGGBB</code>
+              <span class="chips"><span class="chip" style="background:#F2F0EA"></span><span class="chip" style="background:#4A4A4D"></span><span class="chip" style="background:#EFE6D6"></span></span>
+              — if you hold a measured value, this is the most valuable single field in the request.</td></tr>
+            <tr><td class="field"><code>opacity_class</code></td><td class="type">enum</td><td class="req-cell"><span class="req">required</span></td><td class="note">One of the four below</td></tr>
+            <tr><td class="field"><code>openness_factor</code></td><td class="type">decimal</td><td class="req-cell"></td><td class="note">Solar shades only, e.g. <code>3</code> for 3%</td></tr>
+            <tr><td class="field"><code>material</code></td><td class="type">enum</td><td class="req-cell"><span class="req">required</span></td><td class="note"><code>polyester</code>, <code>cotton</code>, <code>linen</code>, <code>blend</code>, <code>bamboo</code>, <code>jute</code>, <code>pvc</code>, <code>vinyl</code>, <code>aluminum</code>, <code>wood</code>, <code>faux_wood</code></td></tr>
+            <tr><td class="field"><code>texture</code></td><td class="type">string</td><td class="req-cell"></td><td class="note">Free text, e.g. <code>woven linen-like</code>, <code>slubbed</code></td></tr>
+            <tr><td class="field"><code>pattern</code></td><td class="type">enum</td><td class="req-cell"></td><td class="note"><code>solid</code>, <code>textured</code>, <code>striped</code>, <code>patterned</code></td></tr>
+            <tr><td class="field"><code>sheen</code></td><td class="type">enum</td><td class="req-cell"></td><td class="note"><code>matte</code>, <code>satin</code>, <code>sheen</code></td></tr>
+            <tr><td class="field"><code>weave</code></td><td class="type">string</td><td class="req-cell"></td><td class="note">e.g. <code>basketweave</code>, <code>twill</code></td></tr>
+            <tr><td class="field"><code>thermal_r_value</code></td><td class="type">decimal</td><td class="req-cell"></td><td class="note">If measured</td></tr>
+            <tr><td class="field"><code>swatch_image</code></td><td class="type">filename</td><td class="req-cell"><span class="req">required</span></td><td class="note">Flat material sample — see image spec</td></tr>
+            <tr><td class="field"><code>product_image</code></td><td class="type">filename</td><td class="req-cell"></td><td class="note">Product alone on white</td></tr>
+            <tr><td class="field"><code>lifestyle_image</code></td><td class="type">filename</td><td class="req-cell"></td><td class="note">Installed in a room</td></tr>
+            <tr><td class="field"><code>status</code></td><td class="type">enum</td><td class="req-cell"></td><td class="note"><code>active</code>, <code>discontinued</code></td></tr>
+            <tr><td class="field"><code>lead_time_days</code></td><td class="type">integer</td><td class="req-cell"></td><td class="note"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Opacity class</h3>
+      <div class="opacity-scale">
+        <div class="opacity-step"><div class="opacity-chip" style="background:var(--shade-0)"></div><code>sheer</code><em>Light passes, no privacy</em></div>
+        <div class="opacity-step"><div class="opacity-chip" style="background:var(--shade-1)"></div><code>light_filtering</code><em>Diffuses, daytime privacy</em></div>
+        <div class="opacity-step"><div class="opacity-chip" style="background:var(--shade-2)"></div><code>room_darkening</code><em>Most light blocked</em></div>
+        <div class="opacity-step"><div class="opacity-chip" style="background:var(--shade-3)"></div><code>blackout</code><em>Effectively total</em></div>
+      </div>
+
+      <h3>Color family values</h3>
+      <p>
+        <code>white</code>, <code>cream</code>, <code>beige</code>, <code>tan</code>,
+        <code>brown</code>, <code>gray</code>, <code>charcoal</code>, <code>black</code>,
+        <code>blue</code>, <code>green</code>, <code>red</code>, <code>yellow</code>,
+        <code>purple</code>, <code>pink</code>, <code>metallic</code>, <code>multi</code>.
+      </p>
+
+      <h3>Example rows</h3>
+      <pre><code>variant_id,product_id,color_name,color_family,color_hex,opacity_class,material,texture,pattern,swatch_image
+RLS26001-01,RLS26001,Bleach White,white,#F2F0EA,blackout,polyester,smooth,solid,RLS26001-01_swatch.jpg
+RLS26001-04,RLS26001,Charcoal,charcoal,#4A4A4D,blackout,polyester,smooth,solid,RLS26001-04_swatch.jpg
+CUR26002-01,CUR26002,Ivory,cream,#EFE6D6,light_filtering,linen,slubbed,textured,CUR26002-01_swatch.jpg</code></pre>
+    </section>
+
+    <section id="images">
+      <h2>Images</h2>
+      <p class="lede">Name every file after its <code>variant_id</code> with a suffix.</p>
+      <div class="files">
+        <div><span>RLS26001-01_swatch.jpg</span><span>flat material sample</span><span>required</span></div>
+        <div><span>RLS26001-01_product.jpg</span><span>product alone on white</span><span>preferred</span></div>
+        <div><span>RLS26001-01_room.jpg</span><span>installed in a room</span><span>optional</span></div>
+      </div>
+
+      <h3>Swatch images</h3>
+      <p>
+        A flat swatch is how we match a product's color to a customer's room. A photograph of the
+        product hanging in a styled room cannot do this — the room's paint, lighting, and white
+        balance all shift the apparent color, and we end up matching the wrong thing.
+      </p>
+      <ul class="plain">
+        <li><strong>Fill the frame</strong> with the material: no room, no window, no props</li>
+        <li><strong>1000 × 1000 px minimum</strong>, square</li>
+        <li><strong>Neutral background</strong> — white or 18% gray, where any is visible</li>
+        <li><strong>Even, neutral lighting</strong> around 5000–6500 K, with no colored bounce and no strong shadow</li>
+        <li><strong>sRGB</strong>, JPEG at quality 90 or above, or PNG</li>
+        <li><strong>No color grading or retouching.</strong> An unedited accurate photo beats a beautiful inaccurate one</li>
+        <li>Show the real weave and texture at full resolution</li>
+      </ul>
+
+      <h3>Product and lifestyle images</h3>
+      <p>
+        Send these as well if you have them. They're genuinely useful for showing drape, fold,
+        hang, and scale, and for generating room previews — they simply can't substitute for a
+        flat swatch.
+      </p>
+    </section>
+
+    <section id="color">
+      <h2>Color accuracy</h2>
+      <p class="lede">
+        Color is the thing we most need to get right, and the thing most easily lost in
+        photography. Any one of these solves it, in order of preference.
+      </p>
+      <ul class="plain">
+        <li>A <strong>measured <code>color_hex</code></strong>, from a spectrophotometer or your design source files</li>
+        <li>A <strong>color reference card</strong> — X-Rite ColorChecker or similar — in frame on a few shots, so we can calibrate the rest</li>
+        <li><strong>Swatch photographs</strong> shot to the lighting specification above</li>
+      </ul>
+      <p>
+        If it's easier to send physical swatch cards, we can measure them ourselves. Let us know
+        and we'll arrange collection.
+      </p>
+    </section>
+
+    <section id="skip">
+      <h2>What we're not asking for</h2>
+      <div class="negative">
+        <p>
+          We don't need style tags, room recommendations, "best for" or "avoid for" guidance, or
+          pairing suggestions. Those are aesthetic judgments we make ourselves, and a guess in
+          those fields is worse for us than a blank.
+        </p>
+        <p style="margin-bottom:0">
+          Please spend the time on accurate physical specifications instead — dimensions,
+          opacity, material, and color.
+        </p>
+      </div>
+    </section>
+
+    <section id="updates">
+      <h2>Updates</h2>
+      <ul class="plain">
+        <li>Keep <code>product_id</code> and <code>variant_id</code> <strong>stable permanently</strong>. If a color is reformulated, issue a new ID rather than changing what an existing one refers to.</li>
+        <li>Send discontinued items with <code>status = discontinued</code> rather than deleting the rows, so we can retire them cleanly instead of discovering a gap.</li>
+        <li>A full refresh on any regular cadence works. Tell us what's realistic on your side.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    If a required field is genuinely unavailable, tell us which one and we'll work out a
+    fallback rather than have you invent a value.
+  </footer>
+</div>
