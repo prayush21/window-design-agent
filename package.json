@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
-    "catalog": "node src/catalog.js"
+    "catalog": "node src/catalog.js",
+    "eval": "node src/eval/run.js"
   },
   "engines": {
     "node": ">=20"
