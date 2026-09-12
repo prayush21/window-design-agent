@@ -14,3 +14,5 @@ evals/cache/
 # Incoming vendor catalog drop — 199MB of images. Track with git-lfs or an object
 # store rather than committing blobs that can never be removed from history.
 Product Catalog/
+Product Catalog V2/
+Product Catalog V2-clean/

@@ -144,7 +144,18 @@ function findPrimaryImage(dirPath) {
 
   const indexImage = files.find((file) => path.parse(file).name.toLowerCase() === "index");
   const selected = indexImage ?? files.sort((a, b) => a.localeCompare(b))[0];
-  return selected ? path.join(dirPath, selected) : null;
+  if (selected) return path.join(dirPath, selected);
+
+  // V2 layout keeps the in-room photos under room/ and the chips under swatch/. A
+  // product with chips but no room photo yet still enters on its first chip.
+  for (const sub of ["room", "swatch"]) {
+    const subDir = path.join(dirPath, sub);
+    if (path.basename(dirPath) !== sub && fs.existsSync(subDir)) {
+      const found = findPrimaryImage(subDir);
+      if (found) return found;
+    }
+  }
+  return null;
 }
 
 function makeImageUrl(imagePath, catalogDir) {
@@ -338,7 +349,7 @@ function readCatalog(catalogDir) {
   }
 
   return {
-    catalogVersion: "window-products-v1",
+    catalogVersion: path.basename(catalogDir),
     catalogDir,
     products
   };

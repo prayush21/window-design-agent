@@ -12,7 +12,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
-const CATALOG_DIR = path.join(ROOT_DIR, "window-products-v1");
+const CATALOG_DIR = process.env.DESIGN_AGENT_CATALOG_DIR
+  ? path.resolve(ROOT_DIR, process.env.DESIGN_AGENT_CATALOG_DIR)
+  : path.join(ROOT_DIR, "window-products-v1");
 const PORT = Number(process.env.PORT || 3000);
 const MAX_JSON_BYTES = 16 * 1024 * 1024;
 const MAX_RANKED_OPTIONS = 10;

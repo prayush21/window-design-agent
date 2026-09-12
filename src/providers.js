@@ -164,12 +164,23 @@ async function buildRerankRequest({ systemPrompt, userImageDataUrl, candidates }
   return blocks;
 }
 
-function text(value) {
+export function text(value) {
   return { type: "text", text: value };
 }
 
-function image(encodedImage) {
+export function image(encodedImage) {
   return { type: "image", image: encodedImage };
+}
+
+// One-shot multimodal call with the same provider plumbing the reranker uses.
+// Callers build their own blocks; the response is parsed as JSON.
+export async function callProvider({ provider, model, blocks }) {
+  const normalizedProvider = normalizeProvider(provider);
+  return normalizedProvider === "openai"
+    ? callOpenAI({ model, blocks })
+    : normalizedProvider === "gemini"
+      ? callGemini({ model, blocks })
+      : callAnthropic({ model, blocks });
 }
 
 function formatList(values) {

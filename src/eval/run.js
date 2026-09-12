@@ -33,6 +33,7 @@ const USAGE = `Usage: npm run eval -- [options]
   --fresh               bypass the response cache
   --baseline <runId>    diff this run against a previous run in evals/runs
   --prompt-file <path>  use a system prompt from a file instead of the default
+  --catalog <dir>       catalog folder (default: window-products-v1)
   --help
 `;
 
@@ -55,7 +56,8 @@ export async function main(argv = process.argv.slice(2)) {
     return 1;
   }
 
-  const catalog = loadCatalog(CATALOG_DIR);
+  const catalogDir = args.catalog ? path.resolve(ROOT_DIR, args.catalog) : CATALOG_DIR;
+  const catalog = loadCatalog(catalogDir);
   const allCases = reconcileCases(paths.casesFile, paths.roomsDir).cases;
   const cases = (args.case ? allCases.filter((c) => c.id.includes(args.case)) : allCases).map(
     withImpliedLabels
@@ -146,6 +148,7 @@ export async function main(argv = process.argv.slice(2)) {
     ranker: args.ranker,
     model: args.model || null,
     repeat: args.repeat,
+    catalog: path.relative(ROOT_DIR, catalogDir),
     catalogFingerprint,
     promptHash: hash(systemPrompt).slice(0, 12),
     summary: aggregate(scores),
@@ -176,7 +179,13 @@ export async function main(argv = process.argv.slice(2)) {
     if (!fs.existsSync(baselineFile)) {
       process.stderr.write(`\nBaseline run "${args.baseline}" not found at ${baselineFile}\n`);
     } else {
-      printDiff(JSON.parse(fs.readFileSync(baselineFile, "utf8")), report);
+      const baseline = JSON.parse(fs.readFileSync(baselineFile, "utf8"));
+      // Cost and health move for reasons that have nothing to do with the change under
+      // test when the catalogs differ; say so rather than letting the deltas read as a regression.
+      if ((baseline.catalog || "window-products-v1") !== report.catalog) {
+        process.stdout.write(`\nNote: baseline ran on "${baseline.catalog || "window-products-v1"}", this run on "${report.catalog}" — cost and variance deltas reflect the catalog, not the ranker.\n`);
+      }
+      printDiff(baseline, report);
     }
   }
 
@@ -364,6 +373,7 @@ function parseArgs(argv) {
     fresh: false,
     baseline: null,
     promptFile: null,
+    catalog: null,
     help: false
   };
 
@@ -381,6 +391,7 @@ function parseArgs(argv) {
     else if (flag === "--fresh") args.fresh = true;
     else if (flag === "--baseline") args.baseline = next();
     else if (flag === "--prompt-file") args.promptFile = next();
+    else if (flag === "--catalog") args.catalog = next();
     else process.stderr.write(`Ignoring unknown flag "${flag}"\n`);
   }
 
