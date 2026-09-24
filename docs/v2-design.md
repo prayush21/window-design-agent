@@ -334,6 +334,30 @@ passes the schema, whether COMPOSE picks IDs from the shortlist, what real faith
 looks like (to calibrate the threshold of 15), and whether the critic's verdicts look sane.
 After it: label the three renders in `/v2/label-critique.html` and run `npm run v2:eval`.
 
+## Live runs so far (2026-09-24)
+
+Three bounded runs on `uploaded_room`:
+
+1. The approved first run. PERCEIVE failed twice: Gemini returned `windowRegion` as a bare
+   box, which the prompt had shown that way, so the no-model fallback ran. All 3 OpenAI renders
+   returned 429 "no credits".
+2. After the fixes below: PERCEIVE, PLAN and COMPOSE all valid on Gemini, every COMPOSE ID in
+   its shortlist. OpenAI renders still 429.
+3. RENDER on Gemini `gemini-3.1-flash-image` (1 render): a realistic off-white drapery, ΔE 6.6
+   vs the swatch (passes 15), about 11 s. The model **redrew the triple window as a single
+   pane**; the critic's `installed` score exists for this, but CRITIQUE (OpenAI) got 429 and the
+   proposal was shown unreviewed.
+
+Fixes from these runs: the PERCEIVE prompt shows the wrapped shape explicitly, and bare values
+are wrapped at confidence 0.5 with a note. A retry now tells the model what the last answer got
+wrong (`correctionNote`). Traces keep the model's raw text (first 6000 chars). Gemini 2.5
+thinking tokens, reported only in the total, are priced as output.
+
+Live is on through `DESIGN_AGENT_LIVE=1` in `.env`, with render routed to Gemini through
+`V2_RENDER_PROVIDER` / `V2_RENDER_MODEL` while OpenAI has no credits. CRITIQUE stays on OpenAI
+(a different provider from COMPOSE, by design), so until credits are added every proposal is
+shown "unreviewed".
+
 ## Tracing
 
 `traces/<sessionId>.json` (schema `v2.trace`): orchestrator name, mode, config summary,

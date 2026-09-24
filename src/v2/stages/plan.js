@@ -1,3 +1,4 @@
+import { withCorrection } from "../correction.js";
 import { text } from "../../providers.js";
 import { GUIDELINES, roomLabel, roomLayers, unmappedFor } from "../guidelines.js";
 import { layerCapacity } from "./retrieve.js";
@@ -43,7 +44,7 @@ export default {
   fixtureKey: (input) => planFixtureKey(input),
 
   async run(input, ctx) {
-    const response = await ctx.providers.llm({ blocks: [text(buildPrompt(input, ctx))], fixtureKey: this.fixtureKey(input) });
+    const response = await ctx.providers.llm({ blocks: withCorrection([text(buildPrompt(input, ctx))], ctx), fixtureKey: this.fixtureKey(input) });
     return response.result;
   },
 

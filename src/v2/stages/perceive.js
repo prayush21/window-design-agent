@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { extractPalette } from "../../baseline/color.js";
 import { encodeRoomImage } from "../../image-cache.js";
+import { withCorrection } from "../correction.js";
 import { image, text } from "../../providers.js";
 import { ROOT_DIR } from "../config.js";
 import { LEVELS, NEEDS, PALETTE_ROLES, ROOM_LIGHT_LEVELS, ROOM_TYPE_VALUES, confidence, nonEmpty } from "../schemas/index.js";
@@ -60,7 +61,7 @@ Return only JSON with this shape. Every field is {"value": …, "confidence": 0.
   "roomType": one of ${JSON.stringify(ROOM_TYPE_VALUES)},
   "windowType": e.g. "double-hung", "sliding", "casement", "picture", "bay", "fixed", "unknown",
   "windowShape": e.g. "wide rectangle", "tall rectangle", "triple bank", "arched",
-  "windowRegion": {"x","y","w","h"} as fractions of image width/height (0..1) for the window opening including its frame,
+  "windowRegion": a box {"x": left, "y": top, "w": width, "h": height} as fractions of the image (0..1) around the window opening and frame,
   "palette": 3-6 dominant room colours [{"hex": "#rrggbb", "name": "warm off-white", "role": one of ${JSON.stringify(PALETTE_ROLES)}, "weight": share of the image 0..1}],
   "materials": visible materials, e.g. ["painted drywall", "oak veneer", "carpet"],
   "styleTags": 2-5 style words, e.g. ["modern", "minimal", "warm"],
@@ -68,7 +69,10 @@ Return only JSON with this shape. Every field is {"value": …, "confidence": 0.
   "existingCovering": short description of any current covering, or null,
   "needs": {"privacy","blackout","glare","moisture","safety"} each one of ${JSON.stringify(LEVELS)}
 }
-Use low confidence when the photo does not show enough; do not guess confidently.`;
+Use low confidence when the photo does not show enough; do not guess confidently.
+Every field, including windowRegion and each need, is wrapped the same way. Example:
+  "windowRegion": {"value": {"x": 0.2, "y": 0.3, "w": 0.5, "h": 0.4}, "confidence": 0.8, "evidence": "window frame edges"},
+  "needs": {"privacy": {"value": "medium", "confidence": 0.5, "evidence": "faces the street"}, ...}`;
 
 export default {
   name: "perceive",
@@ -88,10 +92,10 @@ export default {
     const bytes = fs.readFileSync(path.resolve(ROOT_DIR, input.roomPhoto.path));
     const room = await encodeRoomImage(`data:image/jpeg;base64,${bytes.toString("base64")}`);
     const response = await ctx.providers.llm({
-      blocks: [text(PERCEIVE_PROMPT), text("The room photo:"), image(room)],
+      blocks: withCorrection([text(PERCEIVE_PROMPT), text("The room photo:"), image(room)], ctx),
       fixtureKey: this.fixtureKey(input)
     });
-    return normalizeHexes(response.result);
+    return normalizeHexes(wrapBareFields(response.result));
   },
 
   // No-model perception. Also the baseline PERCEIVE must beat on evals/briefs.
@@ -130,6 +134,24 @@ export default {
     return this.baseline(input, ctx);
   }
 };
+
+// Models sometimes return a field's value without the {value, confidence} wrapper
+// (Gemini did this for windowRegion on the first live run). Wrap it with a middling
+// confidence and say so, rather than throwing the whole perception away.
+const FIELDS = ["roomType", "windowType", "windowShape", "windowRegion", "palette", "materials", "styleTags", "lightLevel", "existingCovering"];
+
+export function wrapBareFields(result) {
+  if (!result || typeof result !== "object") return result;
+  const wrap = (field) =>
+    field !== undefined && !(field && typeof field === "object" && !Array.isArray(field) && "value" in field)
+      ? { value: field, confidence: 0.5, evidence: "unwrapped value from the model; confidence set to 0.5" }
+      : field;
+  for (const key of FIELDS) if (key in result) result[key] = wrap(result[key]);
+  if (result.needs && typeof result.needs === "object") {
+    for (const need of NEEDS) if (need in result.needs) result.needs[need] = wrap(result.needs[need]);
+  }
+  return result;
+}
 
 function normalizeHexes(result) {
   if (!Array.isArray(result?.palette?.value)) return result;

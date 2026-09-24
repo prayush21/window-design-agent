@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { RANKING_IMAGE_SIZES, encodeCatalogImage, encodeRoomImage } from "../../image-cache.js";
+import { withCorrection } from "../correction.js";
 import { image, text } from "../../providers.js";
 import { ROOT_DIR } from "../config.js";
 import { BRIEF_FIELD_PATHS, nonEmpty } from "../schemas/index.js";
@@ -68,7 +69,7 @@ export default {
   }),
 
   async run(input, ctx) {
-    const blocks = await buildBlocks(input, ctx);
+    const blocks = withCorrection(await buildBlocks(input, ctx), ctx);
     const response = await ctx.providers.llm({ blocks, fixtureKey: this.fixtureKey(input) });
     return toProposal(response.result, input, "model");
   },

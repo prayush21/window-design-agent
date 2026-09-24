@@ -120,6 +120,8 @@ export async function runStage(stage, input, ctx) {
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       const calls = [];
       const stageCtx = makeStageContext(ctx, stage, attempt, calls, warn);
+      // A retry tells the model what was wrong, instead of asking the same question twice.
+      stageCtx.previousErrors = attempt > 1 ? lastErrors : [];
       let candidate;
       let errors;
 
@@ -229,14 +231,24 @@ function summarizeCalls(calls, config) {
     costUsd: call.provider === "mock" ? 0 : estimated,
     estimatedCostUsd: estimated,
     latencyMs: call.latencyMs,
-    fixture: call.fixture || null
+    fixture: call.fixture || null,
+    // What the model actually said, for debugging live runs (truncated).
+    rawText: typeof call.rawText === "string" ? call.rawText.slice(0, 6000) : null
   };
 }
 
 export function priceOf(model, usage, prices) {
   const price = prices?.[model];
   if (!price || !usage || usage.inputTokens == null) return null;
-  return ((usage.inputTokens || 0) * price.input + (usage.outputTokens || 0) * price.output) / 1e6;
+  // Gemini 2.5 reports "thinking" tokens only in the total; they are billed as output.
+  const output = Math.max(usage.outputTokens || 0, (usage.totalTokens || 0) - (usage.inputTokens || 0));
+  return ((usage.inputTokens || 0) * price.input + output * price.output) / 1e6;
+}
+
+/** A text block for LLM stages to append on a retry: what the last answer got wrong. */
+export function correctionNote(errors) {
+  if (!errors || errors.length === 0) return null;
+  return `Your previous answer was rejected for these reasons. Fix them and answer again with valid JSON only:\n- ${errors.slice(0, 8).join("\n- ")}`;
 }
 
 function cachePath(stage, input, ctx) {

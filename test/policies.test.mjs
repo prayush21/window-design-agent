@@ -65,3 +65,18 @@ test("reaction-reentry policy", async () => {
     assert.ok(result.reason.length > 5);
   }
 });
+
+test("live-output hardening: bare fields are wrapped, thinking tokens are priced as output", async () => {
+  const { wrapBareFields } = await import("../src/v2/stages/perceive.js");
+  const { priceOf, correctionNote } = await import("../src/v2/runtime.js");
+  const wrapped = wrapBareFields({ windowRegion: { x: 0.1, y: 0.3, w: 0.8, h: 0.4 }, roomType: { value: "bedroom", confidence: 0.9 }, needs: { privacy: "high" } });
+  assert.deepEqual(wrapped.windowRegion.value, { x: 0.1, y: 0.3, w: 0.8, h: 0.4 });
+  assert.equal(wrapped.windowRegion.confidence, 0.5);
+  assert.equal(wrapped.roomType.confidence, 0.9);
+  assert.equal(wrapped.needs.privacy.value, "high");
+  // Gemini 2.5: 707 in, 1084 out, 5044 total → 4337 output tokens billed.
+  const cost = priceOf("gemini-2.5-flash", { inputTokens: 707, outputTokens: 1084, totalTokens: 5044 }, { "gemini-2.5-flash": { input: 0.3, output: 2.5 } });
+  assert.ok(Math.abs(cost - (707 * 0.3 + 4337 * 2.5) / 1e6) < 1e-12);
+  assert.match(correctionNote(["/windowRegion must have required property 'value'"]), /windowRegion/);
+  assert.equal(correctionNote([]), null);
+});
