@@ -177,7 +177,7 @@ the orchestrator, so workflow and agent runs can be compared. Add `traces/` to `
   decision and the reason for it, and every assumption you made in place of asking me.
 
 ## Build order
-Each step is demo-able on its own. Commit at each green step boundary.
+Each step is demo-able on its own. At the end of each step, run the offline checks below, commit, then stop and show me.
 1. Schemas, guidelines.json, runtime, registry, workflow orchestrator, and the stages
    PERCEIVE, BRIEF, PLAN and RETRIEVE, with a text-only output page. At this point it is
    already comparable to v1: it follows the guidelines, gives diverse results, and sends no
@@ -203,46 +203,48 @@ Keep the v1 principles:
 - use `--repeat` to measure the noise floor;
 - every LLM stage must beat its baseline that uses no model.
 
-## Goal for this run: work autonomously until every check below passes
-Work through build steps 1–3 without stopping to ask me. When a decision is mine, make the
-most reasonable choice, record it in `docs/v2-design.md` under "Assumptions to review", and
-keep going. Stop early only for real blockers: a missing API key, a provider outage, or a
-budget cap reached.
+## Paid API calls: none without my explicit go-ahead
+Every LLM, VLM and image-model call costs credits on my OpenAI/Gemini keys. During the
+build, make **zero** paid calls unless I explicitly ask for a live run in chat.
+- Add a `mock` provider to the shared provider plumbing. It returns fixture responses from
+  `test/fixtures/` keyed by stage name + input hash, and throws a clear error on a cache miss
+  (never falls through to a real API).
+- `DESIGN_AGENT_LIVE` defaults to off. With it off, every LLM/VLM/image stage uses the mock
+  provider, and the runtime refuses any real provider call. Live mode requires
+  `DESIGN_AGENT_LIVE=1` set by me.
+- Write the fixtures by hand: realistic, schema-valid outputs for PERCEIVE, PLAN, COMPOSE and
+  CRITIQUE covering at least 3 rooms from `evals/rooms/`. Include some deliberately broken
+  cases: invalid JSON, unknown IDs, a missing field, a disallowed category, a render whose
+  colour is off. For RENDER, the fixture can be the room photo with a flat swatch-coloured
+  rectangle composited over the window area (done in code with sharp). That is enough to
+  exercise the faithfulness check.
+- When a stage is ready for a real call, tell me what the call would be (stage, provider,
+  model, number of images, rough token count) and wait.
 
-You are done when **all** of these are true, and you have verified each one by running it,
-not by reasoning about it:
-
-1. `npm test` passes. It includes schema tests for every stage, unit tests for the code stages
-   (retrieve, faithfulness, policies), and one end-to-end workflow test that uses recorded
-   LLM responses (no network).
-2. `npm run v2:run -- --all` runs the full workflow on every photo in `evals/rooms/`. It
-   completes with no uncaught errors and writes one trace per room. Photos with no window,
-   very dark photos or unreadable images end with an explicit warning, not a crash.
-3. Automatic quality checks across all traces:
-   - guideline compliance is 100%;
-   - every session has 3 directions that differ on at least 2 axes;
+## Offline checks (no network, no paid calls; run at the end of each build step)
+1. `npm test` passes with the network blocked: the test setup stubs `fetch` so that it throws
+   if anything tries to reach an external host.
+2. Schema tests: every stage's input and output schema compiles, the fixtures validate against
+   them, and the broken fixtures are rejected with a warning (no crash, no silent fallback).
+3. Deterministic stage tests, on the real catalog:
+   - `data/guidelines.json` maps every catalog category name exactly, and lists every
+     unmapped guideline name;
+   - RETRIEVE never returns a disallowed category, returns 5–8 variants per layer, and caps
+     each product at 2 variants;
+   - RETRIEVE gives the same output for the same input;
+   - the faithfulness check flags an off-colour render and passes a correct one;
+   - the policies return the expected verdict or re-entry point for a table of cases.
+4. Workflow test: `npm run v2:run -- --all --mock` runs the full orchestrator on every
+   fixture room and writes one trace per room:
    - every returned ID exists in the catalog;
    - every Brief field has a provenance tag;
-   - no session exceeded its render budget.
-4. Render faithfulness (ΔE) is computed and reported for every render. It is not a
-   pass/fail gate; just report the distribution.
-5. Modularity check: a script lists the registry as tool definitions (name, description,
-   inputSchema), and a test runs any single stage alone, using only a saved Session and its
-   input.
-6. Isolation check: the catalog checksum is unchanged, and v1 still works. In this worktree,
-   start the server and confirm `/api/recommend` and `/api/catalog` still respond as in
-   `v1-prototype`.
-7. **Review packet:** `npm run v2:report` builds one self-contained `reports/v2-review.html`.
-   For each room it shows the photo, the Brief with provenance, the 3 directions, the
-   shortlists, the proposals with renders, the critique verdicts with reasons, v1's top pick
-   for the same room (from the v1 eval cache or a v1 run), plus totals for cost and latency.
-   This packet is what I will judge quality from.
-8. `docs/v2-design.md` is up to date, including "Assumptions to review" and "Known
-   weaknesses I'd fix next".
-
-Spending limit for the whole run: no more than 60 image renders and 300 LLM calls in total.
-Cache everything by input hash so re-runs are free. If a limit would be crossed, stop and
-report.
-
-When done, give me a summary: what was built, the check results with their numbers, the
-assumptions I need to review, and the link to the review packet.
+   - there are 3 directions per session, differing on at least 2 axes;
+   - the render budget is respected;
+   - broken fixtures produce visible warnings.
+5. Modularity: the registry exports tool definitions (name, description, inputSchema), and any
+   single stage runs alone from a saved Session plus its input.
+6. Isolation: the catalog checksum is unchanged, and v1's `/api/catalog` still responds on
+   this worktree's server.
+   Do not call `/api/recommend`: that endpoint makes a paid call.
+7. The review report (`npm run v2:report`) builds from mock traces, so its layout is ready
+   before any live run.
