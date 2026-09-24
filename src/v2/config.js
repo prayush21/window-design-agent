@@ -46,6 +46,7 @@ export const DEFAULT_CONFIG = {
   // verify before relying on them. null = unknown, reported as "unpriced".
   prices: {
     "gemini-2.5-flash": { input: 0.3, output: 2.5 },
+    "gemini-3.1-pro-preview": null,
     "gpt-4.1-mini": { input: 0.4, output: 1.6 },
     "gpt-4.1": { input: 2, output: 8 },
     "gpt-image-2": null,
