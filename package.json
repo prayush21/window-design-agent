@@ -7,12 +7,17 @@
     "dev": "node src/server.js",
     "start": "node src/server.js",
     "catalog": "node src/catalog.js",
-    "eval": "node src/eval/run.js"
+    "eval": "node src/eval/run.js",
+    "test": "node --import ./test/setup.mjs --test \"test/**/*.test.mjs\"",
+    "v2:run": "node src/v2/cli/run.js",
+    "v2:report": "node src/v2/report/build.js",
+    "v2:eval": "node src/eval/v2-run.js"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "ajv": "^8.20.0",
     "sharp": "^0.34.5"
   }
 }

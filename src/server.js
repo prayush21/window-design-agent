@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { getMimeType, loadCatalog, selectCandidates } from "./catalog.js";
 import { handleEvalRequest } from "./eval/label-api.js";
 import { generateProductPreview } from "./image-preview.js";
+import { handleV2Request } from "./v2/routes.js";
 import { DEFAULT_RECOMMENDATION_PROMPT, normalizeProvider, rerankProducts } from "./providers.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -55,6 +56,10 @@ export function createAppServer() {
       }
 
       if (await handleEvalRequest(req, res, { rootDir: ROOT_DIR })) {
+        return;
+      }
+
+      if (await handleV2Request(req, res)) {
         return;
       }
 

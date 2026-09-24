@@ -1,0 +1,226 @@
+# v2 design record
+
+Living record of how v2 is built and why. Update it with the code. The brief is
+[`docs/v2-kickoff-prompt.md`](v2-kickoff-prompt.md). The section **Assumptions to review**
+lists every decision made in place of asking.
+
+## What v2 is
+
+A design agent: it helps a person get from an existing room to a desired one, combining
+their taste and intent with design judgment and products that can actually be bought.
+Physical constraints (sizes, mount depth, window measurements) are out of scope for now;
+the empty extension point is `src/v2/extensions/physical-constraints.js`.
+
+v1 made one multimodal call with the whole catalog (84 products, 321 variants, ~397 images)
+and the room photo, and got back a ranked list with self-reported scores. v2 splits that
+into stages, each with a contract, and moves everything deterministic into code:
+
+```
+PERCEIVE (VLM) → BRIEF (code) → PLAN (LLM) → RETRIEVE (code) → COMPOSE (VLM)
+   → RENDER (image) → FAITHFULNESS (code) → CRITIQUE (VLM) → PRESENT (code) → REACT (code)
+```
+
+| v1 problem | v2 answer |
+|---|---|
+| no intent or room type | PERCEIVE infers room type and needs; BRIEF records stated/inferred/assumed per field |
+| no design reasoning | PLAN writes three explicit directions; COMPOSE must cite Brief fields for each claim |
+| position bias from alphabetical catalog | no ranker sees the catalog; RETRIEVE scores in code, COMPOSE sees ≤ 16 swatches |
+| near-duplicate results | directions must differ on ≥ 2 axes; ≤ 2 variants per product in a shortlist |
+| uncalibrated self-reported scores | scores come from code (ΔE, overlaps) with every term exposed; the model gives verdicts, not numbers |
+| explanations written after the choice | rationale claims are part of the proposal and must point at Brief fields |
+| no iteration | critique loop (bounded), then REACT re-enters at PLAN or COMPOSE |
+| cost grows with the catalog | model calls see a shortlist; cost is flat in catalog size |
+
+## Layout
+
+```
+data/guidelines.json          room → needs, visual/functional categories; name map; unmapped names
+data/category-roles.json      catalog category → visual | functional | both
+src/v2/config.js              every tunable; per-stage provider/model; mode (mock/live/baseline)
+src/v2/schemas/               JSON Schemas (Brief, Direction, Shortlist, Proposal, Render,
+                              Faithfulness, Critique, Decision, Reaction, Presentation, Session,
+                              StageRecord, Trace); stage I/O schemas live beside each stage
+src/v2/stages/*.js            one module per stage, all the same shape
+src/v2/stages/index.js        the registry; toolDefinitions() for a future agent
+src/v2/runtime.js             validation, retry, repair/fallback, budget, cache, cost, tracing
+src/v2/policies/              decision points as named, replaceable functions
+src/v2/orchestrators/         workflow.js (now); agent.js later
+src/v2/engine.js              wires config + catalog + providers + trace; used by CLI, API, tests
+src/v2/providers.js           the only door to a model; mock vs live; refuses paid calls unless live
+src/mock-provider.js          fixture store + mock render (shared plumbing, next to providers.js)
+src/v2/routes.js              /api/v2/* and /v2 UI (mounted additively in src/server.js)
+public/v2/                    UI, critique labelling view, v1-vs-v2 comparison view
+test/                         offline checks (network blocked)
+test/fixtures/v2/             hand-written model responses, including broken ones
+traces/                       one JSON trace per session (+ traces/sessions/ for resumable sessions)
+var/                          renders, caches, uploads (gitignored)
+```
+
+## Stage contract
+
+Every stage module exports:
+
+```js
+export default {
+  name, description,          // description is written to double as an LLM tool description
+  inputSchema, outputSchema,  // JSON Schema; the runtime validates both on every call
+  kind: "llm" | "code" | "image",
+  async run(input, ctx),      // ctx = { config, catalog, providers, budget, attempt, warn, meta }
+  // optional:
+  check(output, input, ctx),  // semantic errors beyond the schema (IDs, categories, diversity)
+  repair(output, input, errors, ctx) → { output, notes } | null
+  fallback(input, ctx, errors)          // must be schema-valid; always warned
+  baseline(input, ctx)                  // no-model version of an llm stage
+  fixtureKey(input)                     // readable projection of the input for mock fixtures
+  cacheKey(input)                       // live-mode response cache key
+}
+```
+
+Stages never import each other's `run`, never read the session and hold no module-level
+state (the catalog index and schema compiler are memoised read-only data). They may import
+shared helpers (`layerCapacity` from retrieve is used by plan's feasibility check).
+
+### Runtime (`src/v2/runtime.js`)
+
+For each call: validate input → (live only) response cache → reserve a render if `kind: image`
+→ run → validate output + `check` → on failure retry once (LLM stages) with a `retry`
+warning → still failing: `repair` (warning `repaired`) → else `fallback` (warning
+`fallback`) → else the stage fails and the orchestrator decides. Mock fixture misses,
+refused live calls and an exhausted budget are fatal: they stop the run rather than being
+papered over. Every call becomes a `stageRecord` in the trace with its attempts, provider,
+model, the model it *would* have used (in mock mode), usage, estimated cost and latency.
+
+### Modes
+
+- `mock` (default): every model stage answers from `test/fixtures/v2`. The adapter refuses any
+  real call; the test setup also blocks `fetch` to non-local hosts.
+- `live`: only when the user sets `DESIGN_AGENT_LIVE=1`. Asking for live without it throws.
+- `baseline`: every LLM stage runs its no-model `baseline()`. Same traces, same report, so
+  "every LLM stage must beat its no-model baseline" is measured the same way as everything else.
+
+## Data
+
+### `data/guidelines.json`
+
+Hand-transcribed from `docs/window-design-guidelines.txt`. Every guideline product name has
+an entry in `nameMap` resolving to exact catalog category names. Names with no catalog
+category are listed under `unmapped` with the rooms that cite them:
+
+| Guideline name | Why unmapped |
+|---|---|
+| Stirpe Bamboo Curtain | not in the V2 catalog |
+| Blackout Roman Shades | no blackout Roman shades; not substituted |
+| Faux Wood Blinds | not in the catalog; Wood Blinds not substituted (faux is chosen for moisture) |
+| Blackout Zebra Shades | merged into Zebra Shades by the 2026-09-11 clean-up; no zebra variant is blackout |
+| Top-down Bottom-up Shades | an operating system, not a category; `operation` is null in the catalog |
+| Cordless Systems | a safety feature, not a category; `childSafe` is null in the catalog |
+
+Aliases from the brief: Blackout Curtain(s) → Blackout Drapery, Curtains → Drapery Panels,
+Zebra / Dual Shades → Zebra Shades; plus singular forms (Sheer Curtain → Sheer Curtains).
+
+### Single-layer rooms
+
+Eleven rooms list only one layer (e.g. Nursery: "Functional Layer" only; Basement:
+"Main Visual Layer" only). v2 treats the listed layer as the room's primary covering: it
+becomes the visual layer (the one that is rendered) and the functional layer is `null`.
+`roomLayers()` in `src/v2/guidelines.js` is the only place this rule lives.
+
+### `data/category-roles.json`
+
+Derived from guidelines.json: a category is `visual` if any room lists it in a visual layer,
+`functional` if any room lists it in a functional layer, `both` if both. Drapery Panels,
+Roman Shades and Vertical Blinds are visual-only; Outdoor & Patio Shades is functional-only;
+the rest are both.
+
+## Schemas and the Brief
+
+Every Brief field is `{ value, source: stated | inferred | assumed, confidence, note? }`.
+Precedence per field: stated > inferred (if confidence ≥ 0.35) > an explicit assumed default.
+Assumed defaults come from the room's guideline `needsProfile` where one applies. A stated
+room type raises (never lowers) inferred needs to the room's guideline level.
+
+Free text is read by a small deterministic lexicon (`src/v2/lexicon.js`): room type words,
+warmer/cooler, lighter/darker, need words (blackout, privacy, glare, baby, humid) and
+"no X" colours. Whatever it does not understand stays in `preferences.text`, which PLAN and
+COMPOSE read verbatim.
+
+## PLAN
+
+Exactly three directions. Code checks (not the model): categories allowed for the room and
+layer; functional null when the room has no functional layer; each layer can supply at least
+5 variants under the per-product cap (catches e.g. Cellular Shades alone = 4); every pair
+differs on ≥ 2 of {visual category set, colour strategy, light level}. On failure: retry once,
+then repair in code (drop disallowed categories, top up thin layers), then the deterministic
+template planner, each with a warning.
+
+Direction light levels are `bright | filtered | dark` (what the covering does), distinct
+from the Brief's room light level `bright | medium | dim` (what the room gets).
+
+## RETRIEVE
+
+Code only. Per direction and layer: categories ∩ allowed → every variant with a swatch is
+scored; variants without a swatch (9 of 321) are excluded and counted, never guessed.
+
+`score = 0.55·colour + 0.2·style + 0.15·light + 0.1·preference`, each term in [0, 1] and
+reported in `scoreParts`:
+
+- **colour** by the direction's strategy, all in CIEDE2000 on the Brief palette (weights normalised):
+  tonal = Σ w·exp(−ΔE/25) (v1's de2000-match); contrast = Σ w·gauss(ΔE; 35, 18) (v1's
+  de2000-contrast); neutral-anchor = exp(−C*/10)·(0.4 + 0.6·exp(−|ΔL to dominant|/30));
+  complementary = hue within ~40° of the main accent's opposite, with some chroma.
+- **style**: token overlap of Brief style tags + materials with the variant's styleTags.
+- **light**: opacity fit to the direction's light level (visual layer) or to the needs
+  (functional layer: blackout high → dark; glare/privacy high → filtered).
+- **preference**: warmth, lighter/darker, avoided colour families (avoid → 0).
+
+Then up to 8 per layer, ≤ 2 per product, and each listed category's best variant is
+guaranteed a place. Ties break on variantId, so output is deterministic.
+
+## Tracing
+
+`traces/<sessionId>.json` (schema `v2.trace`): orchestrator name, mode, config summary,
+every stage record (input, output, attempts, warnings, latency, tokens, cost), the Brief with
+provenance, directions, shortlists with score parts, proposals, renders, faithfulness,
+critiques, policy decisions with reasons, reactions, round history, warnings and totals. A
+trace that fails its own schema is still written, with `traceSchemaErrors`, since it is the
+evidence.
+
+## Assumptions to review
+
+Each of these was my call in place of asking. Change any of them in the file named.
+
+1. **Cellular Shades covers both cellular categories.** The catalog splits Cellular Shades and
+   Blackout Cellular Shades; the guideline name maps to both. (`data/guidelines.json` nameMap)
+2. **Single-layer rooms** use their one list as the primary (visual, rendered) layer with no
+   functional layer. (`roomLayers` in `src/v2/guidelines.js`)
+3. **Room needs profiles** (`needsProfile` per room) are my reading of each room's core needs
+   onto low/medium/high. Used only as `assumed` defaults. (`data/guidelines.json`)
+4. **Three more unmapped names** beyond the three you named: Blackout Zebra Shades,
+   Top-down Bottom-up Shades, Cordless Systems (features, not categories). None are substituted.
+5. **Unknown room type → Living Room**, marked `assumed` with confidence 0.2 and shown as an
+   assumption chip. (`DEFAULT_ROOM_TYPE` in `src/v2/stages/brief.js`)
+6. **Inferred fields need confidence ≥ 0.35** to be used; below that the Brief uses an assumed
+   default. (`MIN_INFERRED_CONFIDENCE`)
+7. **A stated room type raises needs** to the room's guideline level (never lowers them).
+8. **Render budget is per round** (6 renders per orchestrator run, 2 revisions per direction).
+   A reaction starts a new round with a fresh budget. Per-lifetime would leave a second round
+   with nothing to render. (`config.budget`)
+9. **Mock fixtures are keyed by a readable projection of the input** (`fixtureKey`), hashed
+   with the stage name, rather than a hash of the full input. That makes fixtures writable by
+   hand and stable when unrelated input details change. The live response cache uses the full
+   input. (`src/mock-provider.js`)
+10. **A missing fixture stops the run** with the exact key to add, rather than falling back to a
+    baseline, so a gap in fixtures is never hidden.
+11. **Direction diversity "category" axis** compares the visual-layer category sets.
+12. **PLAN must be feasible**: each layer's categories must supply ≥ 5 variants under the
+    2-per-product cap, else the plan is invalid (retry → repair by adding categories).
+13. **RETRIEVE weights** 0.55 / 0.2 / 0.15 / 0.1 and the colour-strategy formulas above are
+    first guesses, to be tuned against critique agreement and pairwise preference. (`config.retrieve`)
+14. **Per-stage models**: PERCEIVE, PLAN, COMPOSE on Gemini `gemini-2.5-flash`; CRITIQUE on
+    OpenAI `gpt-4.1-mini` (a different provider from COMPOSE, as asked); RENDER on OpenAI
+    `gpt-image-2` (v1's default). Override with `V2_<STAGE>_PROVIDER` / `V2_<STAGE>_MODEL`.
+15. **Free text is parsed by a small lexicon**, not an LLM. Unparsed text is kept verbatim.
+16. **Prices** in `config.prices` are rough list prices for estimates only; image-model prices
+    are unknown and reported as "unpriced".
+17. **PERCEIVE's fallback** is a no-model perception (k-means palette, low-confidence
+    everything else). It is also PERCEIVE's baseline.

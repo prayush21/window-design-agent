@@ -1,0 +1,85 @@
+{
+  "room": "IMG_4298",
+  "fixtures": [
+    {
+      "stage": "perceive",
+      "key": { "photo": "f17d142cdd0b8702" },
+      "responses": [
+        {
+          "json": {
+            "roomType": { "value": "bedroom", "confidence": 0.55, "evidence": "small room with a heating cabinet; dormitory layout" },
+            "windowType": { "value": "casement", "confidence": 0.5, "evidence": "fixed upper pane over an operable lower sash with a warning sign" },
+            "windowShape": { "value": "tall rectangle", "confidence": 0.8 },
+            "windowRegion": { "value": { "x": 0.35, "y": 0.27, "w": 0.37, "h": 0.46 }, "confidence": 0.8, "evidence": "green frame edges" },
+            "palette": {
+              "value": [
+                { "hex": "#cdbca6", "name": "warm beige wall", "role": "wall", "weight": 0.42 },
+                { "hex": "#a8927c", "name": "taupe pinstripe curtain", "role": "textile", "weight": 0.2 },
+                { "hex": "#ddd6c6", "name": "cream sill and heater cabinet", "role": "trim", "weight": 0.12 },
+                { "hex": "#6f7d5f", "name": "sage green window frame", "role": "trim", "weight": 0.06 },
+                { "hex": "#6e8a4a", "name": "garden greenery outside", "role": "other", "weight": 0.2 }
+              ],
+              "confidence": 0.7
+            },
+            "materials": { "value": ["painted drywall", "painted metal heater cabinet", "painted metal window frame", "cotton curtain"], "confidence": 0.6 },
+            "styleTags": { "value": ["simple", "traditional", "warm"], "confidence": 0.45 },
+            "lightLevel": { "value": "bright", "confidence": 0.8, "evidence": "direct daylight on a sunny lawn" },
+            "existingCovering": { "value": "pair of beige pinch-pleat curtains with brown pinstripes on a ceiling track", "confidence": 0.9 },
+            "needs": {
+              "privacy": { "value": "medium", "confidence": 0.5, "evidence": "faces a path across a lawn" },
+              "blackout": { "value": "medium", "confidence": 0.45 },
+              "glare": { "value": "medium", "confidence": 0.5, "evidence": "strong daylight" },
+              "moisture": { "value": "low", "confidence": 0.7 },
+              "safety": { "value": "low", "confidence": 0.6 }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stage": "plan",
+      "key": {
+        "roomType": "bedroom",
+        "palette": ["#cdbca6", "#a8927c", "#ddd6c6", "#6f7d5f", "#6e8a4a"],
+        "needs": { "privacy": "medium", "blackout": "medium", "glare": "medium", "moisture": "low", "safety": "low" },
+        "preferences": null,
+        "previous": []
+      },
+      "responses": [
+        {
+          "json": {
+            "directions": [
+              {
+                "id": "d1",
+                "title": "Quiet sleep",
+                "intent": "Blend a full-blackout drape into the beige walls so mornings stay dark and the room stays calm.",
+                "layers": { "visual": ["Blackout Drapery"], "functional": ["Blackout Roller Shades"] },
+                "colourStrategy": "tonal",
+                "lightLevel": "dark",
+                "textureNote": "Heavy, soft weave."
+              },
+              {
+                "id": "d2",
+                "title": "Garden echo",
+                "intent": "Pick up the green frame and garden with a complementary drape and a sheer to soften daylight.",
+                "layers": { "visual": ["Blackout Drapery"], "functional": ["Sheer Curtains"] },
+                "colourStrategy": "complementary",
+                "lightLevel": "filtered",
+                "textureNote": "Slubbed cotton look over a fine voile."
+              },
+              {
+                "id": "d3",
+                "title": "Airy neutral",
+                "intent": "Keep the window light and open by day with a pale neutral drape and a light-filtering cellular shade.",
+                "layers": { "visual": ["Blackout Drapery"], "functional": ["Cellular Shades", "Blackout Cellular Shades"] },
+                "colourStrategy": "neutral-anchor",
+                "lightLevel": "bright",
+                "textureNote": "Smooth, pale, low-sheen."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

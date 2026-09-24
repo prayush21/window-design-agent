@@ -1,0 +1,213 @@
+{
+  "room": "IMG_4297",
+  "fixtures": [
+    {
+      "stage": "perceive",
+      "key": {
+        "photo": "c63d8f0277c1ea34"
+      },
+      "note": "BROKEN on attempt 1: the response is cut off mid-object (invalid JSON). Attempt 2 is valid.",
+      "responses": [
+        {
+          "broken": "json",
+          "rawText": "{\"roomType\": {\"value\": \"bedroom\", \"confidence\": 0.6, \"evidence\": \"suitcase and small personal room\"}, \"windowType\": {\"value\": \"double-hung\", \"confidence\": 0.7, \"evidence\": \"two stacked sashes"
+        },
+        {
+          "json": {
+            "roomType": {
+              "value": "bedroom",
+              "confidence": 0.6,
+              "evidence": "small private room with a packed suitcase; reads as a dorm bedroom"
+            },
+            "windowType": {
+              "value": "double-hung",
+              "confidence": 0.7,
+              "evidence": "two stacked sashes in a painted metal frame"
+            },
+            "windowShape": {
+              "value": "tall rectangle",
+              "confidence": 0.8,
+              "evidence": "opening is taller than wide"
+            },
+            "windowRegion": {
+              "value": {
+                "x": 0.46,
+                "y": 0.28,
+                "w": 0.42,
+                "h": 0.55
+              },
+              "confidence": 0.75,
+              "evidence": "maroon frame edges"
+            },
+            "palette": {
+              "value": [
+                {
+                  "hex": "#d9c8b8",
+                  "name": "warm beige wall",
+                  "role": "wall",
+                  "weight": 0.45
+                },
+                {
+                  "hex": "#e6dccf",
+                  "name": "cream textured ceiling",
+                  "role": "ceiling",
+                  "weight": 0.12
+                },
+                {
+                  "hex": "#ecebe8",
+                  "name": "white striped curtain",
+                  "role": "textile",
+                  "weight": 0.18
+                },
+                {
+                  "hex": "#6b2326",
+                  "name": "maroon window frame",
+                  "role": "trim",
+                  "weight": 0.08
+                },
+                {
+                  "hex": "#3a302a",
+                  "name": "dark night glazing",
+                  "role": "other",
+                  "weight": 0.17
+                }
+              ],
+              "confidence": 0.7,
+              "evidence": "night photo under warm artificial light"
+            },
+            "materials": {
+              "value": [
+                "painted drywall",
+                "textured ceiling",
+                "painted metal window frame",
+                "cotton curtain"
+              ],
+              "confidence": 0.6
+            },
+            "styleTags": {
+              "value": [
+                "simple",
+                "institutional",
+                "warm"
+              ],
+              "confidence": 0.5
+            },
+            "lightLevel": {
+              "value": "dim",
+              "confidence": 0.6,
+              "evidence": "taken at night; no daylight visible"
+            },
+            "existingCovering": {
+              "value": "white pinch-pleat curtain with thin navy horizontal stripes on a ceiling track",
+              "confidence": 0.9
+            },
+            "needs": {
+              "privacy": {
+                "value": "high",
+                "confidence": 0.6,
+                "evidence": "bedroom, lit interior visible from outside at night"
+              },
+              "blackout": {
+                "value": "medium",
+                "confidence": 0.5,
+                "evidence": "sleeping room; unknown street lighting"
+              },
+              "glare": {
+                "value": "low",
+                "confidence": 0.5
+              },
+              "moisture": {
+                "value": "low",
+                "confidence": 0.7
+              },
+              "safety": {
+                "value": "low",
+                "confidence": 0.6
+              }
+            },
+            "notes": "Window unit (AC/heater) sits under the sill; coverings should clear it."
+          }
+        }
+      ]
+    },
+    {
+      "stage": "plan",
+      "key": {
+        "roomType": "bedroom",
+        "palette": [
+          "#d9c8b8",
+          "#e6dccf",
+          "#ecebe8",
+          "#6b2326",
+          "#3a302a"
+        ],
+        "needs": {
+          "privacy": "high",
+          "blackout": "medium",
+          "glare": "low",
+          "moisture": "low",
+          "safety": "low"
+        },
+        "preferences": null,
+        "previous": []
+      },
+      "responses": [
+        {
+          "json": {
+            "directions": [
+              {
+                "id": "d1",
+                "title": "Warm cocoon",
+                "intent": "Wrap the window in heavy drapery that melts into the beige walls so the room feels enclosed and restful at night.",
+                "layers": {
+                  "visual": [
+                    "Blackout Drapery"
+                  ],
+                  "functional": [
+                    "Blackout Roller Shades"
+                  ]
+                },
+                "colourStrategy": "tonal",
+                "lightLevel": "dark",
+                "textureNote": "Dense, softly napped weave that absorbs light."
+              },
+              {
+                "id": "d2",
+                "title": "Soft daylight layers",
+                "intent": "Keep the room calm and neutral by day with a sheer behind a low-chroma drape that closes fully for sleep.",
+                "layers": {
+                  "visual": [
+                    "Blackout Drapery"
+                  ],
+                  "functional": [
+                    "Sheer Curtains"
+                  ]
+                },
+                "colourStrategy": "neutral-anchor",
+                "lightLevel": "filtered",
+                "textureNote": "Linen-look drape over an airy voile."
+              },
+              {
+                "id": "d3",
+                "title": "Framed in contrast",
+                "intent": "Answer the maroon frame with a drape that clearly stands apart from the walls, and keep days bright with a cellular shade.",
+                "layers": {
+                  "visual": [
+                    "Blackout Drapery"
+                  ],
+                  "functional": [
+                    "Cellular Shades",
+                    "Blackout Cellular Shades"
+                  ]
+                },
+                "colourStrategy": "contrast",
+                "lightLevel": "bright",
+                "textureNote": "Matte, slightly heavier cloth for a crisp edge."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

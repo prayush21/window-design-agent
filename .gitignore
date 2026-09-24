@@ -16,3 +16,7 @@ evals/cache/
 Product Catalog/
 Product Catalog V2/
 Product Catalog V2-clean/
+
+# v2 outputs
+traces/
+var/

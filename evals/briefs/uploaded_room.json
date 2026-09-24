@@ -1,0 +1,16 @@
+{
+  "roomId": "uploaded_room",
+  "author": "example (written by Claude to show the format; replace with your own labels)",
+  "notes": "Living room with a triple casement window, blue-grey walls, navy furniture.",
+  "fields": {
+    "roomType": { "acceptable": ["living-room"] },
+    "windowType": { "acceptable": ["casement", "fixed", "picture"] },
+    "lightLevel": { "acceptable": ["medium", "bright"] },
+    "needs.privacy": { "acceptable": ["medium", "high"] },
+    "needs.blackout": { "acceptable": ["low"] },
+    "needs.moisture": { "acceptable": ["low"] },
+    "styleTags": { "anyOf": ["cozy", "casual", "cool", "traditional"] },
+    "palette": { "hexes": ["#8e9aa3", "#2f4a73", "#e9e6df"], "maxDeltaE": 15 },
+    "windowRegion": { "region": { "x": 0.09, "y": 0.35, "w": 0.83, "h": 0.4 }, "minIoU": 0.5 }
+  }
+}

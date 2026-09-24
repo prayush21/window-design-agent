@@ -1,0 +1,85 @@
+{
+  "room": "living-room-window",
+  "fixtures": [
+    {
+      "stage": "perceive",
+      "key": { "photo": "04dcec428a60c46c" },
+      "responses": [
+        {
+          "json": {
+            "roomType": { "value": "living-room", "confidence": 0.5, "evidence": "sofa arm and open floor; could also be a studio bedroom" },
+            "windowType": { "value": "sliding", "confidence": 0.55 },
+            "windowShape": { "value": "wide rectangle", "confidence": 0.85 },
+            "windowRegion": { "value": { "x": 0.35, "y": 0.37, "w": 0.42, "h": 0.39 }, "confidence": 0.8 },
+            "palette": {
+              "value": [
+                { "hex": "#d8cfc4", "name": "warm white wall", "role": "wall", "weight": 0.55 },
+                { "hex": "#e2dbd3", "name": "off-white ceiling", "role": "ceiling", "weight": 0.18 },
+                { "hex": "#8f8a86", "name": "grey sofa", "role": "furniture", "weight": 0.08 },
+                { "hex": "#222222", "name": "black window frame", "role": "trim", "weight": 0.05 },
+                { "hex": "#b86b3c", "name": "kraft paper bag", "role": "accent", "weight": 0.04 }
+              ],
+              "confidence": 0.7
+            },
+            "materials": { "value": ["painted drywall", "black metal window frame", "painted radiator cover"], "confidence": 0.6 },
+            "styleTags": { "value": ["minimal", "bright", "unstyled"], "confidence": 0.5 },
+            "lightLevel": { "value": "bright", "confidence": 0.75 },
+            "existingCovering": { "value": "white horizontal blind, fully raised", "confidence": 0.8 },
+            "needs": {
+              "privacy": { "value": "high", "confidence": 0.55, "evidence": "street level, faces a bus shelter" },
+              "blackout": { "value": "low", "confidence": 0.5 },
+              "glare": { "value": "medium", "confidence": 0.5 },
+              "moisture": { "value": "low", "confidence": 0.8 },
+              "safety": { "value": "low", "confidence": 0.7 }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stage": "plan",
+      "key": {
+        "roomType": "living-room",
+        "palette": ["#d8cfc4", "#e2dbd3", "#8f8a86", "#222222", "#b86b3c"],
+        "needs": { "privacy": "high", "blackout": "low", "glare": "medium", "moisture": "low", "safety": "low" },
+        "preferences": null,
+        "previous": []
+      },
+      "responses": [
+        {
+          "json": {
+            "directions": [
+              {
+                "id": "d1",
+                "title": "Soft gallery white",
+                "intent": "Keep the room bright with sheers and panels that disappear into the warm white walls; a roller shade handles street privacy.",
+                "layers": { "visual": ["Sheer Curtains", "Drapery Panels"], "functional": ["Roller Shades"] },
+                "colourStrategy": "tonal",
+                "lightLevel": "bright",
+                "textureNote": "Airy voile with a soft linen panel."
+              },
+              {
+                "id": "d2",
+                "title": "Tailored Roman",
+                "intent": "A structured, low-chroma Roman shade anchors the bare wall; a zebra shade gives adjustable privacy.",
+                "layers": { "visual": ["Roman Shades"], "functional": ["Zebra Shades"] },
+                "colourStrategy": "neutral-anchor",
+                "lightLevel": "filtered",
+                "textureNote": "Crisp folds, flat weave."
+              },
+              {
+                "id": "d3",
+                "title": "Grounded contrast",
+                "intent": "Frame the window with full-height panels that stand out against the pale walls, echoing the grey sofa.",
+                "layers": { "visual": ["Drapery Panels"], "functional": ["Solar Shades"] },
+                "colourStrategy": "contrast",
+                "lightLevel": "filtered",
+                "textureNote": "Heavier textured weave."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
