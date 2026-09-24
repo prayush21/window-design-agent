@@ -100,6 +100,7 @@ export function critiqueAgreement(traces, labels) {
   const rows = [];
   for (const trace of traces) {
     for (const critique of trace.critiques) {
+      if (critique.source !== "model") continue;
       const render = trace.renders.find((r) => r.renderId === critique.renderId);
       const label = render && labels[render.cacheKey];
       if (!label) continue;

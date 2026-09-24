@@ -22,5 +22,9 @@ Deliberately broken cases (each must produce a visible warning, never a crash):
 | IMG_4298 | compose | one direction returns an unknown variant ID twice → fallback to RETRIEVE's top pick |
 | IMG_4298 | compose | one direction omits `rationale` on attempt 1 → retry succeeds |
 | living-room-window | render | first render of one proposal is off-colour → faithfulness fails → re-render |
-| living-room-window | critique | one proposal gets REVISE → revised proposal |
+| living-room-window | critique | d2 gets REVISE → revised proposal (exclude the rejected variant) → ACCEPT |
+| IMG_4297 | critique | attempt 1 says ACCEPT with a score of 2 (contradicts the rubric) → retry succeeds |
 | uploaded_room | critique | one direction is DROPped; one critique is invalid JSON twice → unreviewed |
+
+Reaction rounds (used by `test/react.test.mjs`): uploaded_room "warmer" on r1-d1-a1 (COMPOSE
+re-entry) and IMG_4297 "this is a nursery" (PLAN re-entry, directions d4–d6).

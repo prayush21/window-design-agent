@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Label critiques · v2</title>
+    <link rel="stylesheet" href="/v2/styles.css" />
+    <style>
+      .label-grid { display: grid; gap: 1rem; }
+      .label-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(220px, 280px); gap: 0.8rem; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.8rem; }
+      @media (max-width: 860px) { .label-row { grid-template-columns: minmax(0, 1fr); } }
+      .label-row img { width: 100%; border-radius: 8px; display: block; }
+      .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+      .reveal { font-size: 0.8rem; border-top: 1px dashed var(--line); padding-top: 0.4rem; margin-top: 0.4rem; }
+      .labelled-accept { outline: 2px solid var(--ok); }
+      .labelled-reject { outline: 2px solid var(--bad); }
+      .filters { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; font-size: 0.85rem; flex-wrap: wrap; }
+      main { padding: 1.2rem 1.4rem; max-width: 1400px; }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Window design agent · v2 · evals</p>
+        <h1>Label critiques</h1>
+      </div>
+      <div class="topbar-right"><a href="/v2/">Back to v2</a><a href="/v2/compare.html">Compare v1/v2</a></div>
+    </header>
+    <main>
+      <p class="muted small">
+        For each render: would you show this to the person? Label first; the critic's verdict is hidden until you do, so it cannot
+        anchor you. Labels are saved to <code>evals/critique-labels.json</code>, keyed by the render, and scored by
+        <code>npm run v2:eval</code> (agreement and Cohen's κ, against the always-accept baseline).
+      </p>
+      <div class="filters">
+        <label><input type="checkbox" id="unlabelled" checked /> Unlabelled only</label>
+        <label><input type="checkbox" id="live-only" /> Live renders only</label>
+        <span id="count" class="muted"></span>
+      </div>
+      <div id="rows" class="label-grid"></div>
+    </main>
+    <script type="module">
+      const $ = (s) => document.querySelector(s);
+      const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+      let renders = [];
+
+      async function load() {
+        renders = (await (await fetch("/api/v2/eval/renders")).json()).renders;
+        draw();
+      }
+
+      function draw() {
+        const rows = renders.filter((r) => (!$("#unlabelled").checked || !r.label) && (!$("#live-only").checked || r.mode === "live"));
+        const done = renders.filter((r) => r.label).length;
+        $("#count").textContent = `${rows.length} shown · ${done}/${renders.length} labelled`;
+        $("#rows").innerHTML = rows.length ? rows.map(row).join("") : `<p class="muted">Nothing to label. Run sessions first (npm run v2:run -- --all).</p>`;
+      }
+
+      function row(r) {
+        const labelled = r.label ? `labelled-${r.label.verdict}` : "";
+        return `<article class="label-row ${labelled}" data-key="${esc(r.cacheKey)}">
+          <figure style="margin:0"><img src="/eval-rooms/${encodeURIComponent(r.roomPhoto.split("/").pop())}" alt="room before" loading="lazy" /><figcaption class="small muted">before · ${esc(r.roomId)}</figcaption></figure>
+          <figure style="margin:0"><img src="/v2-renders/${encodeURIComponent(r.imagePath)}" alt="render" loading="lazy" /><figcaption class="small muted">render · ${esc(r.mode)}${r.faithfulness ? ` · ΔE ${r.faithfulness.deltaE ?? "n/a"}${r.faithfulness.pass ? "" : " (off-colour)"}` : ""}</figcaption></figure>
+          <div>
+            <h3>${esc(r.direction?.title || "")}</h3>
+            <p class="small">${esc(r.direction?.intent || "")}</p>
+            <p class="small muted">${esc(r.variantId)} · ${esc(r.direction?.colourStrategy || "")}</p>
+            <input type="text" placeholder="note (optional)" data-note value="${esc(r.label?.note || "")}" />
+            <div class="actions" style="margin-top:.4rem">
+              <button type="button" data-verdict="accept">Accept</button>
+              <button type="button" class="secondary" data-verdict="reject">Reject</button>
+            </div>
+            ${r.label ? `<div class="reveal">You: <b>${esc(r.label.verdict)}</b> · Critic: ${r.critique ? `<span class="verdict ${esc(r.critique.verdict)}">${esc(r.critique.verdict)}</span> (${esc(r.critique.source)}) ${esc(r.critique.reason)}` : "not critiqued (render failed faithfulness or critique off)"}</div>` : ""}
+          </div>
+        </article>`;
+      }
+
+      $("#rows").addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-verdict]");
+        if (!button) return;
+        const article = button.closest("[data-key]");
+        const r = renders.find((x) => x.cacheKey === article.dataset.key);
+        const body = { cacheKey: r.cacheKey, verdict: button.dataset.verdict, note: article.querySelector("[data-note]").value, sessionId: r.sessionId, renderId: r.renderId };
+        const response = await fetch("/api/v2/eval/critique-labels", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (!response.ok) return alert((await response.json()).error);
+        r.label = (await response.json()).saved;
+        draw();
+      });
+      $("#unlabelled").addEventListener("change", draw);
+      $("#live-only").addEventListener("change", draw);
+      load();
+    </script>
+  </body>
+</html>

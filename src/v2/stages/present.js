@@ -74,9 +74,10 @@ export default {
 
 export function present(input, ctx) {
   const { min, max } = ctx.config.present;
-  const current = input.proposals.filter((p) => p.round === input.round);
+  // The latest proposal of each current direction, whichever round produced it: after
+  // a compose-only reaction, directions that were not re-composed keep their proposal.
   const latestPerDirection = input.directions
-    .map((d) => current.filter((p) => p.directionId === d.id).at(-1))
+    .map((d) => input.proposals.filter((p) => p.directionId === d.id).sort((a, b) => a.round - b.round || a.attempt - b.attempt).at(-1))
     .filter(Boolean);
 
   let chosen;
@@ -85,8 +86,8 @@ export function present(input, ctx) {
     chosen = latestPerDirection.map((p) => ({ proposal: p, status: "unreviewed" }));
     notes.push("Critique is off: every proposal is shown unreviewed.");
   } else {
-    const accepted = current.filter((p) => p.status === "accepted");
-    const unreviewed = current.filter((p) => p.status === "unreviewed");
+    const accepted = latestPerDirection.filter((p) => p.status === "accepted");
+    const unreviewed = latestPerDirection.filter((p) => p.status === "unreviewed");
     chosen = [...accepted.map((p) => ({ proposal: p, status: "accepted" })), ...unreviewed.map((p) => ({ proposal: p, status: "unreviewed" }))];
     if (chosen.length < min) {
       // Not enough approved: show the best of the rest, clearly marked, never silently.

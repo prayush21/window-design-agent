@@ -15,6 +15,9 @@ const USAGE = `Usage: npm run v2:run -- [options]
   --live                  live mode; refused unless DESIGN_AGENT_LIVE=1 is set
   --baseline              every model stage uses its no-model baseline
   --orchestrator <name>   default: workflow
+  --repeat <n>            run each room n times (noise floor for npm run v2:eval)
+  --max-renders <n>       render budget per round (default 6)
+  --max-revisions <n>     critique revisions per direction (default 2)
   --resume <session.json> continue a saved session from its cursor
   --react '<json>'        with --resume: apply a reaction first, e.g. '{"kind":"feedback","text":"warmer"}'
 `;
@@ -27,8 +30,20 @@ export async function main(argv = process.argv.slice(2)) {
   }
 
   const mode = args.baseline ? "baseline" : args.live ? "live" : args.mock ? "mock" : undefined;
-  const config = resolveConfig(mode ? { mode } : {});
-  process.stdout.write(`\nv2 ${args.orchestrator} · mode ${config.mode}${config.mode === "live" ? " · PAID CALLS" : " · no paid calls"}\n\n`);
+  const budget = {};
+  if (args.maxRenders !== undefined) budget.maxRenders = args.maxRenders;
+  if (args.maxRevisions !== undefined) budget.maxRevisionsPerDirection = args.maxRevisions;
+  let config;
+  try {
+    config = resolveConfig({ ...(mode ? { mode } : {}), budget });
+  } catch (error) {
+    process.stderr.write(`\n${error.message}\n`);
+    return 2;
+  }
+  process.stdout.write(
+    `\nv2 ${args.orchestrator} · mode ${config.mode}${config.mode === "live" ? " · PAID CALLS" : " · no paid calls"} · ` +
+      `budget ${config.budget.maxRenders} renders/round, ${config.budget.maxRevisionsPerDirection} revisions/direction\n\n`
+  );
 
   const jobs = [];
   if (args.resume) {
@@ -44,7 +59,7 @@ export async function main(argv = process.argv.slice(2)) {
       return 1;
     }
     for (const room of rooms) {
-      jobs.push(
+      for (let r = 0; r < args.repeat; r += 1) jobs.push(
         createSession({
           roomPhotoPath: path.join("evals", room.photo),
           roomId: room.id,
@@ -89,7 +104,7 @@ function summarize(session) {
 }
 
 function parseArgs(argv) {
-  const args = { orchestrator: "workflow" };
+  const args = { orchestrator: "workflow", repeat: 1 };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
     const next = () => argv[(i += 1)];
@@ -103,6 +118,9 @@ function parseArgs(argv) {
     else if (flag === "--orchestrator") args.orchestrator = next();
     else if (flag === "--resume") args.resume = next();
     else if (flag === "--react") args.react = next();
+    else if (flag === "--max-renders") args.maxRenders = Math.max(0, Number(next()));
+    else if (flag === "--max-revisions") args.maxRevisions = Math.max(0, Number(next()));
+    else if (flag === "--repeat") args.repeat = Math.max(1, Number(next()) || 1);
     else if (flag === "--help" || flag === "-h") args.help = true;
     else process.stderr.write(`Ignoring unknown flag "${flag}"\n`);
   }

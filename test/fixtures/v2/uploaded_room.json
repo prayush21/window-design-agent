@@ -392,6 +392,75 @@
           }
         }
       ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "roomType": "living-room",
+        "directionId": "d1",
+        "exclude": [
+          "RMS26002-P02"
+        ],
+        "preferences": "warmer",
+        "feedback": "warmer"
+      },
+      "note": "Round 2, after the person said 'warmer' about r1-d1-a1.",
+      "responses": [
+        {
+          "json": {
+            "directionId": "d1",
+            "visual": {
+              "productId": "RMS26003",
+              "variantId": "RMS26003-P05"
+            },
+            "functional": {
+              "productId": "SOS26001",
+              "variantId": "SOS2600102B7"
+            },
+            "rationale": [
+              {
+                "claim": "Earthy greige keeps the calm Roman shade but shifts it warm, as you asked.",
+                "briefFields": [
+                  "preferences.warmth",
+                  "preferences.text"
+                ]
+              },
+              {
+                "claim": "It still sits close enough to the blue-grey wall to read as one surface across the three sashes.",
+                "briefFields": [
+                  "palette",
+                  "windowShape"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "directionId": "d1",
+        "variantId": "RMS26003-P05",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "Warmer than the sky blue while keeping the calm, unified window; answers the feedback.",
+            "revisionHint": null
+          }
+        }
+      ]
     }
   ]
 }

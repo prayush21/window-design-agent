@@ -82,7 +82,9 @@ export function archiveRound(session, { keepDirections = false } = {}) {
   });
   session.round += 1;
   session.presentation = null;
-  session.budget = { rendersUsed: 0, revisions: {} };
+  // Reset in place: the orchestrator's budget tracker holds this object.
+  session.budget.rendersUsed = 0;
+  session.budget.revisions = {};
   if (!keepDirections) {
     session.directions = [];
     session.shortlists = {};

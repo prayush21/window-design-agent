@@ -48,7 +48,10 @@ export default {
   },
 
   check(output, input, ctx) {
-    return checkDirections(output.directions, input.brief, ctx);
+    const errors = checkDirections(output.directions, input.brief, ctx);
+    const used = new Set((input.previousDirections || []).map((d) => d.id));
+    for (const d of output.directions) if (used.has(d.id)) errors.push(`direction id ${d.id} was already used in an earlier round`);
+    return errors;
   },
 
   repair(output, input, errors, ctx) {
@@ -259,7 +262,12 @@ Rules:
 ${previousDirections.length > 0 ? `- The person has seen these directions already; propose new ones that respond to their feedback:\n${previousDirections.map((d) => `  ${d.id}: ${d.title} (${d.colourStrategy}, ${d.lightLevel}, ${d.layers.visual.join("/")})`).join("\n")}` : ""}
 
 Return only JSON: {"directions": [{"id": "d1", "title": "...", "intent": "one sentence", "layers": {"visual": ["..."], "functional": ["..."] or null}, "colourStrategy": "...", "lightLevel": "...", "textureNote": "..."}, ...]}
-Use ids ${previousDirections.length > 0 ? "that were not used before (e.g. r2-d1)" : "d1, d2, d3"}.`;
+Use ids ${previousDirections.length > 0 ? `that were not used before (e.g. ${nextIds(previousDirections).join(", ")})` : "d1, d2, d3"}.`;
+}
+
+function nextIds(previous) {
+  const max = Math.max(0, ...previous.map((d) => Number(/^d(\d+)$/.exec(d.id)?.[1] || 0)));
+  return [1, 2, 3].map((n) => `d${max + n}`);
 }
 
 export function briefValues(brief) {

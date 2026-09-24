@@ -6,6 +6,7 @@ import faithfulness from "./faithfulness.js";
 import perceive from "./perceive.js";
 import plan from "./plan.js";
 import present from "./present.js";
+import react from "./react.js";
 import render from "./render.js";
 import retrieve from "./retrieve.js";
 
@@ -13,7 +14,7 @@ import retrieve from "./retrieve.js";
 // never imports them directly, and toolDefinitions() exposes the same stages to a
 // future tool-calling agent with no rewrite.
 
-export const STAGES = Object.fromEntries([perceive, brief, plan, retrieve, compose, render, faithfulness, critique, present].map((stage) => [stage.name, stage]));
+export const STAGES = Object.fromEntries([perceive, brief, plan, retrieve, compose, render, faithfulness, critique, present, react].map((stage) => [stage.name, stage]));
 
 export function getStage(name) {
   const stage = STAGES[name];

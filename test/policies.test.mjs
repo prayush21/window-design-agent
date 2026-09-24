@@ -41,3 +41,27 @@ test("critique-verdict policy", () => {
   }
   assert.throws(() => decideAfterCritique({ ...base, critique: critique("MAYBE") }), /Unknown critique verdict/);
 });
+
+test("reaction-reentry policy", async () => {
+  const { decideReentry } = await import("../src/v2/policies/reaction-reentry.js");
+  const change = (field) => ({ field, to: "x", source: "stated" });
+  const base = { directionIds: ["d1", "d2", "d3"], targetDirectionId: null, unparsed: null, changes: [] };
+  const cases = [
+    [{ ...base, reaction: { kind: "pick", proposalId: "r1-d1-a1" } }, "done", []],
+    [{ ...base, reaction: { kind: "feedback" }, changes: [change("roomType"), change("needs.safety")] }, "plan", []],
+    [{ ...base, reaction: { kind: "edit-assumption" }, changes: [change("needs.privacy")] }, "plan", []],
+    [{ ...base, reaction: { kind: "edit-assumption" }, changes: [change("palette")] }, "plan", []],
+    [{ ...base, reaction: { kind: "feedback", proposalId: "r1-d2-a1" }, targetDirectionId: "d2", changes: [change("preferences.warmth"), change("preferences.text")] }, "compose", ["d2"]],
+    [{ ...base, reaction: { kind: "feedback", proposalId: "r1-d2-a1" }, targetDirectionId: "d2", changes: [change("preferences.text")], unparsed: "not quite" }, "compose", ["d2"]],
+    [{ ...base, reaction: { kind: "feedback" }, changes: [change("preferences.warmth"), change("preferences.text")] }, "compose", ["d1", "d2", "d3"]],
+    [{ ...base, reaction: { kind: "feedback" }, changes: [change("preferences.text")], unparsed: "something else entirely" }, "plan", []],
+    // A room change wins over a target: the directions themselves are stale.
+    [{ ...base, reaction: { kind: "feedback", proposalId: "r1-d1-a1" }, targetDirectionId: "d1", changes: [change("roomType")] }, "plan", []]
+  ];
+  for (const [facts, decision, directionIds] of cases) {
+    const result = decideReentry(facts);
+    assert.equal(result.decision, decision, JSON.stringify(facts));
+    assert.deepEqual(result.directionIds, directionIds);
+    assert.ok(result.reason.length > 5);
+  }
+});

@@ -1,5 +1,10 @@
 # Window Product Design Agent
 
+> **v2 (branch `v2-agent`)**: a propose → render → critique design agent built from staged,
+> swappable modules. Open `http://localhost:3001/v2/` after `npm run dev`. Design record:
+> [`docs/v2-design.md`](docs/v2-design.md). It runs on mock fixtures unless you set
+> `DESIGN_AGENT_LIVE=1`. The v1 prototype below is unchanged.
+
 Small prototype for recommending the best window-covering product from `window-products-v1` for an uploaded room/window image.
 
 ## Run

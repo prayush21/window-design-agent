@@ -3,12 +3,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { getMimeType } from "../catalog.js";
 import { evalPaths, listRoomPhotos } from "../eval/label-api.js";
-import { ROOT_DIR, resolveConfig, resolvePath } from "./config.js";
+import { ROOT_DIR, catalogDir, resolveConfig, resolvePath } from "./config.js";
 import { runSession } from "./engine.js";
 import { ORCHESTRATORS } from "./orchestrators/index.js";
 import { createSession, loadSession } from "./session.js";
 import { toolDefinitions } from "./stages/index.js";
 import { GUIDELINES } from "./guidelines.js";
+import { loadCatalogIndex } from "./catalog-index.js";
+import { listRenders, readCritiqueLabels, readPairwise, saveCritiqueLabel, savePairwise, v1TopPicks, v2EvalPaths } from "../eval/v2-labels.js";
 
 // /api/v2/* and the v2 UI. Mounted by src/server.js ahead of v1's static handler;
 // v1 routes are untouched. Mode comes from the environment: mock unless the user
@@ -65,6 +67,9 @@ export async function handleV2Request(req, res) {
     }
     if (sessionMatch && req.method === "POST" && sessionMatch[2]) {
       return await reactToSession(req, res, url, sessionMatch[1]);
+    }
+    if (url.pathname.startsWith("/api/v2/eval/")) {
+      return await handleEval(req, res, route);
     }
     if (route === "GET /api/v2/traces") {
       return sendJson(res, { traces: listTraces() });
@@ -132,6 +137,55 @@ async function streamRun(res, session, { config, orchestrator }) {
   write({ type: "final", session: publicSession(session) });
   res.end();
   return true;
+}
+
+// Labelling (critique agreement) and blind v1-vs-v2 comparison.
+async function handleEval(req, res, route) {
+  const paths = v2EvalPaths(ROOT_DIR);
+  const config = resolveConfig();
+  if (route === "GET /api/v2/eval/renders") {
+    const labels = readCritiqueLabels(paths.critiqueLabels).labels;
+    return sendJson(res, { renders: listRenders(readAllTraces(), labels) });
+  }
+  if (route === "POST /api/v2/eval/critique-labels") {
+    return sendJson(res, { saved: saveCritiqueLabel(paths.critiqueLabels, await readJson(req)) });
+  }
+  if (route === "GET /api/v2/eval/pairs") {
+    const catalog = await loadCatalogIndex({ catalogDir: catalogDir(), cacheDir: resolvePath(config, "cache") });
+    const { picks, skipped, runsDir } = v1TopPicks(paths.v1RunsDir, catalog);
+    const latest = new Map();
+    for (const trace of readAllTraces()) {
+      const roomId = trace.roomPhoto?.roomId;
+      const top = trace.presentation?.items?.[0];
+      if (!roomId || !top) continue;
+      if (!latest.has(roomId) || latest.get(roomId).trace.updatedAt < trace.updatedAt) latest.set(roomId, { trace, top });
+    }
+    const describe = (variantId) => {
+      const v = catalog.variants.get(variantId);
+      return v && { variantId, productId: v.productId, name: v.name, category: v.category, hex: v.hex, swatchImageUrl: v.swatchImageUrl, productImageUrl: catalog.products.get(v.productId)?.imageUrl };
+    };
+    const pairs = [...latest.entries()].map(([roomId, { trace, top }]) => ({
+      roomId,
+      roomPhotoUrl: `/eval-rooms/${encodeURIComponent(path.basename(trace.roomPhoto.path))}`,
+      v2: { sessionId: trace.sessionId, mode: trace.mode, proposalId: top.proposalId, renderUrl: top.renderUrl, ...describe(top.visual.variantId) },
+      v1: picks[roomId] ? { ...picks[roomId], ...describe(picks[roomId].variantId) } : null
+    }));
+    return sendJson(res, { pairs, skippedV1Picks: skipped, v1RunsDir: path.relative(ROOT_DIR, runsDir) || runsDir, judgments: readPairwise(paths.pairwise).judgments });
+  }
+  if (route === "POST /api/v2/eval/pairwise") {
+    return sendJson(res, { saved: savePairwise(paths.pairwise, await readJson(req)) });
+  }
+  return sendJson(res, { error: `No eval route for ${route}.` }, 404);
+}
+
+function readAllTraces() {
+  const dir = resolvePath(resolveConfig(), "traces");
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")))
+    .filter((t) => t.traceVersion === 1);
 }
 
 function readSession(sessionId) {

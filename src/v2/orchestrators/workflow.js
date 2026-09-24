@@ -2,6 +2,7 @@ import { MockFixtureMissError } from "../../mock-provider.js";
 import { LiveCallRefusedError } from "../providers.js";
 import { BudgetExceededError, createBudget, runStage } from "../runtime.js";
 import { getPolicy } from "../policies/index.js";
+import { archiveRound } from "../session.js";
 import { getStage } from "../stages/index.js";
 
 // The fixed workflow: perceive → brief → plan → retrieve → (compose → render →
@@ -148,6 +149,63 @@ export async function* run(session, ctx) {
     }
   }
 
+  // REACT → re-entry policy → the next cursor. The round's state moves to history.
+  async function* handleReaction() {
+    const reaction = {
+      reactionId: `re${session.reactions.length + 1}`,
+      round: session.round,
+      proposalId: null,
+      text: null,
+      at: new Date().toISOString(),
+      ...session.pendingReaction
+    };
+    delete session.pendingReaction;
+
+    let out;
+    try {
+      out = yield* step("react", { brief: session.brief, reaction, proposals: session.proposals });
+    } catch (error) {
+      if (isFatal(error)) throw error;
+      yield warn("reaction-rejected", `Reaction not applied: ${error.message}`);
+      session.cursor = { next: "await-reaction" };
+      return;
+    }
+    session.reactions.push(reaction);
+    session.brief = out.brief;
+    yield { type: "brief", brief: session.brief };
+
+    const { result, event } = decide(
+      "reaction-reentry",
+      {
+        reaction: { kind: reaction.kind, proposalId: reaction.proposalId, text: reaction.text },
+        changes: out.changes,
+        targetDirectionId: out.targetDirectionId,
+        directionIds: session.directions.map((d) => d.id),
+        unparsed: out.unparsed
+      },
+      { directionId: out.targetDirectionId, proposalId: reaction.proposalId }
+    );
+    yield event;
+
+    if (result.decision === "done") {
+      session.cursor = { next: "done" };
+    } else if (result.decision === "plan") {
+      archiveRound(session);
+      session.cursor = { next: "plan" };
+    } else if (result.decision === "compose") {
+      // Same directions, different variants: every visual variant already shown for
+      // a direction is excluded, and the Brief changed, so shortlists are refreshed.
+      const exclude = {};
+      const feedback = {};
+      for (const directionId of result.directionIds) {
+        exclude[directionId] = [...new Set(session.proposals.filter((p) => p.directionId === directionId).map((p) => p.visual.variantId))];
+        if (reaction.text && directionId === out.targetDirectionId) feedback[directionId] = reaction.text;
+      }
+      archiveRound(session, { keepDirections: true });
+      session.cursor = { next: "retrieve", directionIds: result.directionIds, exclude, feedback };
+    }
+  }
+
   // Render, check the colour, re-render once if the policy says so. Returns the
   // faithful render, or null when there is none to critique.
   async function* renderAndCheck(proposal, checkColour) {
@@ -200,6 +258,11 @@ export async function* run(session, ctx) {
     }
   }
 
+  // A reaction waiting on a presented session resumes at REACT.
+  if (session.pendingReaction && ["await-reaction", "done", "react"].includes(session.cursor.next)) {
+    session.cursor = { next: "react" };
+  }
+
   while (true) {
     const next = session.cursor.next;
 
@@ -219,11 +282,12 @@ export async function* run(session, ctx) {
     } else if (next === "retrieve") {
       for (const directionId of session.cursor.directionIds) {
         const direction = session.directions.find((d) => d.id === directionId);
-        const shortlist = yield* step("retrieve", { brief: session.brief, direction }, { directionId });
+        const exclude = session.cursor.exclude?.[directionId] || [];
+        const shortlist = yield* step("retrieve", { brief: session.brief, direction, exclude }, { directionId });
         session.shortlists[directionId] = shortlist;
         yield { type: "shortlist", shortlist };
       }
-      session.cursor = { next: "compose", directionIds: session.cursor.directionIds };
+      session.cursor = { ...session.cursor, next: "compose" };
     } else if (next === "compose") {
       for (const directionId of session.cursor.directionIds) {
         yield* designDirection(directionId);
@@ -242,6 +306,8 @@ export async function* run(session, ctx) {
       });
       yield { type: "presentation", presentation: session.presentation };
       session.cursor = { next: "await-reaction" };
+    } else if (next === "react") {
+      yield* handleReaction();
     } else {
       break;
     }

@@ -243,6 +243,97 @@ product, the functional product ("described, not rendered"), the rationale with 
 field chips, and the critique verdict. Below the cards, a "What I assumed" chip for every
 inferred or assumed Brief field, least confident first; clicking one edits it (REACT).
 
+## REACT and re-entry
+
+The person can pick a card, type feedback on one card ("Refine this one"), type general
+feedback, or click an assumption chip and correct it. REACT (code, `stages/react.js`) applies
+it to the Brief: an edited chip becomes `stated` (confidence 1); feedback is appended to
+`preferences.text` and read by the lexicon (room type, warmth, lightness, needs, "no X"
+colours, style words); a new room type raises non-stated needs to its guideline level, as
+BRIEF does. Reactions naming an unknown proposal, or empty ones, are rejected with a
+`reaction-rejected` warning and change nothing.
+
+The `reaction-reentry` policy (`policies/reaction-reentry.js`) decides:
+
+| Reaction | Decision |
+|---|---|
+| a pick, nothing else changed | `done` |
+| room re-described: room type, needs, style, palette, light, materials, window | `plan` (new directions, new ids d4…) |
+| only preferences changed, about one card | `compose` for that direction |
+| only preferences changed, not about one card | `compose` for every direction |
+| unparsed text about one card | `compose` for that direction, with the text as feedback |
+| unparsed text not about any card | `plan` (PLAN reads `preferences.text`) |
+
+On `compose`, every visual variant already shown for the direction is excluded, and
+RETRIEVE runs again for it first, since the Brief (and so the preference score) changed.
+Directions not re-composed keep their proposal on the new cards. Every re-entry archives the
+round into `session.history` and starts a new round (fresh budget).
+
+## Evals
+
+`src/eval/v2-metrics.js` (per-trace) and `npm run v2:eval` (`src/eval/v2-run.js`, across
+traces). No model calls; every LLM stage is compared with its no-model baseline:
+
+| Metric | Source | Baseline |
+|---|---|---|
+| perception | Brief vs `evals/briefs/<room>.json` (format in its README; one example) | k-means perception (PERCEIVE's `baseline`) |
+| guideline compliance | proposals whose categories are allowed (automatic) | — |
+| direction diversity | mean pairwise axis difference; ΔE between directions' top picks | template planner (PLAN's `baseline`) |
+| render faithfulness | ΔE render vs swatch (automatic) | — |
+| critique agreement | model verdict vs your labels, agreement and Cohen's κ | always-accept |
+| compose deviation | how often COMPOSE picks something other than RETRIEVE's top | (tells you whether the VLM adds anything) |
+| end-to-end | blind pairwise preference, v2's first card vs v1's top pick | — |
+| noise floor | repeated sessions per room (`--repeat`): presented-set Jaccard, room-type agreement | — |
+
+`npm run v2:run -- --all --baseline` runs the whole pipeline with every LLM stage replaced by
+its baseline, producing ordinary traces for the same report and comparison.
+
+Labelling: `/v2/label-critique.html` shows before/render side by side and hides the critic's
+verdict until you label (so it cannot anchor you). Labels go to
+`evals/critique-labels.json`, keyed by the render's content hash. Comparison:
+`/v2/compare.html` shows each room with v2's first card and v1's top pick in random order,
+both as swatch + product photo (no render, so the comparison is about the choice). v1 picks
+come from `evals/runs/*/report.json` (v1's eval harness), or `V1_RUNS_DIR`; picks whose IDs
+are not in the current catalog are skipped and counted.
+
+## Running it
+
+```bash
+npm test                                   # offline checks; network blocked
+npm run v2:run -- --all --mock             # every eval room, fixtures only
+npm run v2:report                          # traces/report/index.html (also /v2/report)
+npm run v2:eval                            # per-stage metrics vs baselines
+npm run dev                                # http://localhost:3001/v2/
+```
+
+Resume a saved session with a reaction:
+`npm run v2:run -- --resume traces/sessions/<id>.session.json --react '{"kind":"feedback","proposalId":"r1-d1-a1","text":"warmer"}'`
+
+## First live run (proposed, not run)
+
+One room, full pipeline, tightly bounded. It needs your go-ahead; nothing in the build made a
+paid call.
+
+```bash
+DESIGN_AGENT_LIVE=1 npm run v2:run -- --room uploaded_room --live --max-renders 3 --max-revisions 0
+```
+
+| Stage | Provider / model | Calls | Images sent | Rough tokens (in / out) |
+|---|---|---|---|---|
+| PERCEIVE | Gemini `gemini-2.5-flash` | 1 | 1 (room, ≤1536 px) | ~1.5k / ~0.5k |
+| PLAN | Gemini `gemini-2.5-flash` | 1 | 0 | ~1.2k / ~0.5k |
+| COMPOSE | Gemini `gemini-2.5-flash` | 3 | ~16 each (≤15 swatches at 256 px + room) ≈ 48 | ~6k / ~0.3k each |
+| RENDER | OpenAI `gpt-image-2`, 1024², low | 3 image edits | 3 inputs each (room, product, swatch) | priced per image |
+| CRITIQUE | OpenAI `gpt-4.1-mini` | 3 | 3 each (room, swatch, render) = 9 | ~2.5k / ~0.2k each |
+
+Total: 8 LLM calls (up to 16 if every one retries once), ~58 images into LLMs, 3 image
+generations (the cap; an off-colour render cannot be re-rendered within it and is shown
+unrendered). About 30k input and 2.5k output tokens, ≈ $0.02 of LLM cost at the list prices in
+`config.prices`, plus 3 `gpt-image-2` edits. What it answers: whether real PERCEIVE output
+passes the schema, whether COMPOSE picks IDs from the shortlist, what real faithfulness ΔE
+looks like (to calibrate the threshold of 15), and whether the critic's verdicts look sane.
+After it: label the three renders in `/v2/label-critique.html` and run `npm run v2:eval`.
+
 ## Tracing
 
 `traces/<sessionId>.json` (schema `v2.trace`): orchestrator name, mode, config summary,
@@ -314,3 +405,17 @@ Each of these was my call in place of asking. Change any of them in the file nam
 26. **The critic's hint is passed to the revision** (`critiqueHint` in COMPOSE's input). It is not
     part of COMPOSE's fixture key; the key uses the exclusion list, which already identifies the
     revision.
+27. **Round-2 PLAN uses fresh direction ids** (d4, d5, d6…) so proposals from different rounds
+    never collide; PLAN's check rejects a reused id.
+28. **REACT uses the same lexicon as BRIEF**; feedback it cannot parse is kept verbatim and
+    routes by whether it names a card (see the table above).
+29. **The comparison view compares choices, not renders.** v1 has no render for its pick, and
+    rendering it would be a paid call per room. Both sides show swatch + product photo.
+30. **v1 picks for the comparison come from this worktree's `evals/runs`** (empty now). The v1
+    folder has model runs on the V2 catalog (2026-09-12); set `V1_RUNS_DIR=../design-agent/evals/runs`
+    to read them in place (read-only), or copy them. I did not copy anything from the v1 folder.
+31. **The example hand brief (`evals/briefs/uploaded_room.json`) was written by me** from the
+    same view the fixture was written from, so its 100% perception score is circular. Replace it.
+32. **The catalog checksum is computed with sorted output.** In this sandbox `find` walks in a
+    nondeterministic order, which made the unsorted checksum change between identical runs.
+    `find … -exec shasum {} + | LC_ALL=C sort | shasum` is order-independent.
