@@ -1,4 +1,6 @@
-import { runStage, createBudget } from "../runtime.js";
+import { MockFixtureMissError } from "../../mock-provider.js";
+import { LiveCallRefusedError } from "../providers.js";
+import { BudgetExceededError, createBudget, runStage } from "../runtime.js";
 import { getStage } from "../stages/index.js";
 
 // The fixed workflow: perceive → brief → plan → retrieve → (compose → render →
@@ -8,6 +10,8 @@ import { getStage } from "../stages/index.js";
 // Only this file knows the order. Stages are looked up by name in the registry.
 
 export const name = "workflow";
+
+const isFatal = (error) => error instanceof MockFixtureMissError || error instanceof LiveCallRefusedError;
 
 export async function* run(session, ctx) {
   session.orchestrator = name;
@@ -29,6 +33,63 @@ export async function* run(session, ctx) {
     }
     yield { type: "stage-end", stage: stageName, outcome: result.outcome, ...meta };
     return result.output;
+  }
+
+  function warn(code, message, meta = {}) {
+    const warning = { code, message, stage: null, directionId: meta.directionId ?? null, proposalId: meta.proposalId ?? null, at: new Date().toISOString() };
+    session.warnings.push(warning);
+    return { type: "warning", warning };
+  }
+
+  // COMPOSE → RENDER for one direction.
+  async function* designDirection(directionId) {
+    const direction = session.directions.find((d) => d.id === directionId);
+    const shortlist = session.shortlists[directionId];
+    const exclude = [...(session.cursor.exclude?.[directionId] || [])];
+    const feedback = session.cursor.feedback?.[directionId] || null;
+    const attempt = session.proposals.filter((p) => p.round === session.round && p.directionId === directionId).length + 1;
+
+    let proposal;
+    try {
+      proposal = yield* step(
+        "compose",
+        { brief: session.brief, direction, shortlist, roomPhoto: session.input.roomPhoto, round: session.round, attempt, exclude, feedback },
+        { directionId }
+      );
+    } catch (error) {
+      if (isFatal(error)) throw error;
+      yield warn("compose-failed", `No proposal for ${directionId}: ${error.message}`, { directionId });
+      return;
+    }
+    session.proposals.push(proposal);
+    yield { type: "proposal", proposal };
+
+    yield* renderProposal(proposal, 1);
+    proposal.status = "unreviewed";
+  }
+
+  // Returns the render, or null (with a visible warning) when the budget is spent
+  // or the image stage failed.
+  async function* renderProposal(proposal, attempt) {
+    const meta = { directionId: proposal.directionId, proposalId: proposal.proposalId };
+    try {
+      const render = yield* step(
+        "render",
+        { roomPhoto: session.input.roomPhoto, proposal, windowRegion: session.brief.windowRegion.value, attempt },
+        meta
+      );
+      session.renders.push(render);
+      yield { type: "render", render };
+      return render;
+    } catch (error) {
+      if (error instanceof BudgetExceededError) {
+        yield warn("render-budget", `${proposal.proposalId} not rendered: ${error.message}`, meta);
+        return null;
+      }
+      if (isFatal(error)) throw error;
+      yield warn("render-failed", `${proposal.proposalId} render ${attempt} failed: ${error.message}`, meta);
+      return null;
+    }
   }
 
   while (true) {
@@ -54,6 +115,24 @@ export async function* run(session, ctx) {
         session.shortlists[directionId] = shortlist;
         yield { type: "shortlist", shortlist };
       }
+      session.cursor = { next: "compose", directionIds: session.cursor.directionIds };
+    } else if (next === "compose") {
+      for (const directionId of session.cursor.directionIds) {
+        yield* designDirection(directionId);
+      }
+      session.cursor = { next: "present" };
+    } else if (next === "present") {
+      session.presentation = yield* step("present", {
+        brief: session.brief,
+        directions: session.directions,
+        proposals: session.proposals,
+        renders: session.renders,
+        faithfulness: session.faithfulness,
+        critiques: session.critiques,
+        round: session.round,
+        critiqueEnabled: false
+      });
+      yield { type: "presentation", presentation: session.presentation };
       session.cursor = { next: "await-reaction" };
     } else {
       break;

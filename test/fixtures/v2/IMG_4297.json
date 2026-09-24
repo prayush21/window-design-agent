@@ -208,6 +208,145 @@
           }
         }
       ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "bedroom",
+        "directionId": "d1",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d1",
+            "visual": {
+              "productId": "CUR26007",
+              "variantId": "CUR2600702B9"
+            },
+            "functional": {
+              "productId": "RLS26006",
+              "variantId": "RLS2600601B9"
+            },
+            "rationale": [
+              {
+                "claim": "A light warm beige drape sits a shade off the beige walls, so the window reads as part of the wall at night.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "Blackout drape over a blackout roller shade gives a fully dark, private room when the lights are on after dark.",
+                "briefFields": [
+                  "needs.privacy",
+                  "needs.blackout",
+                  "roomType"
+                ]
+              },
+              {
+                "claim": "A soft, dense weave replaces the thin striped cotton curtain and adds the cosiness the room lacks.",
+                "briefFields": [
+                  "existingCovering",
+                  "materials",
+                  "styleTags"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "bedroom",
+        "directionId": "d2",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d2",
+            "visual": {
+              "productId": "CUR26008",
+              "variantId": "CUR2600803B9"
+            },
+            "functional": {
+              "productId": "CUR26027",
+              "variantId": "CUR2602701B1"
+            },
+            "rationale": [
+              {
+                "claim": "A soft off-white drape anchors the window without adding colour to an already warm, busy corner.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "A warm cream sheer behind it keeps daytime light soft while the drape closes fully for sleep.",
+                "briefFields": [
+                  "lightLevel",
+                  "needs.blackout"
+                ]
+              },
+              {
+                "claim": "Both layers stay pale, so the maroon frame remains the only accent.",
+                "briefFields": [
+                  "palette",
+                  "styleTags"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "bedroom",
+        "directionId": "d3",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d3",
+            "visual": {
+              "productId": "CUR26009",
+              "variantId": "CUR2600904B9"
+            },
+            "functional": {
+              "productId": "CES26004",
+              "variantId": "CES26004-P02"
+            },
+            "rationale": [
+              {
+                "claim": "Slate blue-grey stands clearly apart from the beige walls and cools the strong maroon frame instead of competing with it.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "A natural-tone blackout cellular shade handles privacy and darkness while the drape stays open by day.",
+                "briefFields": [
+                  "needs.privacy",
+                  "needs.blackout"
+                ]
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }

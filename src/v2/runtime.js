@@ -100,9 +100,11 @@ export async function runStage(stage, input, ctx) {
   const cacheFile = cachePath(stage, input, ctx);
   if (cacheFile && fs.existsSync(cacheFile)) {
     const cached = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
-    if (validate(stage.outputSchema, cached.output).length === 0) {
-      finish({ output: cached.output, outcome: "cached", cached: true });
-      return { output: cached.output, outcome: "cached", warnings };
+    const usable = validate(stage.outputSchema, cached.output).length === 0 && (!stage.cacheValid || stage.cacheValid(cached.output, ctx));
+    if (usable) {
+      const output = "cached" in cached.output ? { ...cached.output, cached: true } : cached.output;
+      finish({ output, outcome: "cached", cached: true });
+      return { output, outcome: "cached", warnings };
     }
   }
 

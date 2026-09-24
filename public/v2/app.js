@@ -266,7 +266,7 @@ function renderPresentation(session) {
       <article class="card ${item.status}">
         ${item.renderUrl ? `<img class="render" src="${item.renderUrl}" alt="Render of ${esc(item.title)}" />` : `<div class="render none">no render</div>`}
         <div class="card-body">
-          <h3>${esc(item.title)} ${item.status !== "accepted" ? `<span class="warn-inline">${esc(item.status)}</span>` : ""}</h3>
+          <h3>${esc(item.title)} ${item.status !== "accepted" ? `<span class="warn-inline">${esc(item.status)}</span>` : ""}${item.source && item.source !== "model" ? ` <span class="warn-inline" title="The model's pick was invalid, so this is RETRIEVE's top-ranked variant">${esc(item.source)} pick</span>` : ""}</h3>
           <p class="muted small">${esc(item.intent || "")}</p>
           ${productLine("Visual", item.visual)}
           ${item.functional ? productLine("Functional (described, not rendered)", item.functional) : ""}

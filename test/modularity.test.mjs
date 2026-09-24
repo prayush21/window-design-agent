@@ -44,6 +44,16 @@ test("any single stage runs alone from a saved Session plus its input", async ()
 
   const plan = await runSingleStage("plan", { brief: saved.brief, previousDirections: [] }, { config });
   assert.deepEqual(plan.output.directions, saved.directions);
+
+  const d1 = saved.directions[0];
+  const composeInput = { brief: saved.brief, direction: d1, shortlist: saved.shortlists[d1.id], roomPhoto: saved.input.roomPhoto, round: 1, attempt: 1, exclude: [], feedback: null };
+  const compose = await runSingleStage("compose", composeInput, { config, meta: { directionId: d1.id } });
+  const { status: _s1, ...composed } = compose.output;
+  const { status: _s2, ...original } = saved.proposals.find((p) => p.proposalId === compose.output.proposalId);
+  assert.deepEqual(composed, original, "COMPOSE alone reproduces the orchestrated proposal");
+
+  const render = await runSingleStage("render", { roomPhoto: saved.input.roomPhoto, proposal: compose.output, windowRegion: saved.brief.windowRegion.value, attempt: 1 }, { config });
+  assert.equal(render.output.cacheKey, saved.renders.find((r) => r.proposalId === compose.output.proposalId && r.attempt === 1).cacheKey);
 });
 
 test("a session resumes from its cursor (re-enter at a stage boundary)", async () => {

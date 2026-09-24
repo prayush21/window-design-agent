@@ -257,6 +257,132 @@
           }
         }
       ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "roomType": "home-office",
+        "directionId": "d1",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d1",
+            "visual": {
+              "productId": "SHS26002",
+              "variantId": "SHS26002-P03"
+            },
+            "functional": {
+              "productId": "SOS26003",
+              "variantId": "SOS2600302B6"
+            },
+            "rationale": [
+              {
+                "claim": "A natural sheer shade sits close to the tan walls and diffuses light behind the monitor.",
+                "briefFields": [
+                  "palette",
+                  "needs.glare"
+                ]
+              },
+              {
+                "claim": "A light beige solar shade cuts glare on bright days while keeping the view of the street.",
+                "briefFields": [
+                  "needs.glare",
+                  "needs.privacy"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "roomType": "home-office",
+        "directionId": "d2",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d2",
+            "visual": {
+              "productId": "ZES26004",
+              "variantId": "ZES2600401B7"
+            },
+            "functional": {
+              "productId": "RLS26012",
+              "variantId": "RLS2601202B2"
+            },
+            "rationale": [
+              {
+                "claim": "A light grey zebra shade is a quiet, even backdrop for video calls.",
+                "briefFields": [
+                  "styleTags",
+                  "roomType"
+                ]
+              },
+              {
+                "claim": "Its bands tilt between view and privacy for a ground-floor desk facing the street.",
+                "briefFields": [
+                  "needs.privacy",
+                  "needs.glare"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "roomType": "home-office",
+        "directionId": "d3",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d3",
+            "visual": {
+              "productId": "WOB26001",
+              "variantId": "WOB26001-P05"
+            },
+            "functional": {
+              "productId": "CES26004",
+              "variantId": "CES26004-P02"
+            },
+            "rationale": [
+              {
+                "claim": "Vintage oak slats contrast with the black frame and warm up the tan wall.",
+                "briefFields": [
+                  "palette",
+                  "materials"
+                ]
+              },
+              {
+                "claim": "Slats tilt to block direct glare on the desk; a blackout cellular shade darkens the room fully when needed.",
+                "briefFields": [
+                  "needs.glare",
+                  "needs.blackout"
+                ]
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }

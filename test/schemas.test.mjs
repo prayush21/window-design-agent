@@ -52,7 +52,7 @@ test("fixtures: valid responses match their stage's output schema; broken ones f
       }
     }
   }
-  assert.ok(counts.valid >= 8, `valid responses: ${counts.valid}`);
+  assert.ok(counts.valid >= 20, `valid responses: ${counts.valid}`);
   assert.ok(counts.json >= 1 && counts.schema >= 1 && counts.check >= 1, JSON.stringify(counts));
 });
 

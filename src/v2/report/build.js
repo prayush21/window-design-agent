@@ -189,7 +189,7 @@ async function presentationBlock(trace, catalog, rendersDir) {
     trace.presentation.items.map(async (item) => {
       const render = trace.renders.find((r) => item.renderUrl && item.renderUrl.endsWith(encodeURIComponent(r.imagePath)));
       const src = render ? await thumb(path.join(rendersDir, render.imagePath), 360) : null;
-      return `<div class="card">${src ? `<img src="${src}" alt="" />` : ""}<p><b>${esc(item.title)}</b> <span class="${item.status === "accepted" ? "ok" : "warn"}">${esc(item.status)}</span></p>
+      return `<div class="card">${src ? `<img src="${src}" alt="" />` : ""}<p><b>${esc(item.title)}</b> <span class="${item.status === "accepted" ? "ok" : "warn"}">${esc(item.status)}</span>${item.source && item.source !== "model" ? ` <span class="warn">${esc(item.source)} pick</span>` : ""}</p>
         <p class="small">${esc(item.visual.name)} · ${esc(item.visual.category)}${item.functional ? ` + ${esc(item.functional.name)} · ${esc(item.functional.category)}` : ""}</p></div>`;
     })
   );

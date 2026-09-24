@@ -167,7 +167,10 @@ reported in `scoreParts`:
 - **colour** by the direction's strategy, all in CIEDE2000 on the Brief palette (weights normalised):
   tonal = Σ w·exp(−ΔE/25) (v1's de2000-match); contrast = Σ w·gauss(ΔE; 35, 18) (v1's
   de2000-contrast); neutral-anchor = exp(−C*/10)·(0.4 + 0.6·exp(−|ΔL to dominant|/30));
-  complementary = hue within ~40° of the main accent's opposite, with some chroma.
+  complementary = hue within ~40° of the opposite of the room's overall hue (circular mean of
+  palette hues weighted by share × chroma), with some chroma. An earlier version anchored on
+  the single most chromatic accent; in the blue-grey room that was the warm lamp, so
+  "complementary" picked blue. The weighted mean fixes that.
 - **style**: token overlap of Brief style tags + materials with the variant's styleTags.
 - **light**: opacity fit to the direction's light level (visual layer) or to the needs
   (functional layer: blackout high → dark; glare/privacy high → filtered).
@@ -175,6 +178,43 @@ reported in `scoreParts`:
 
 Then up to 8 per layer, ≤ 2 per product, and each listed category's best variant is
 guaranteed a place. Ties break on variantId, so output is deterministic.
+
+## COMPOSE
+
+VLM, one call per direction (and per revision). It sees the Brief, the direction, and only
+that direction's shortlist: one text line per candidate followed by its swatch image
+(≤ 16 swatches), then the room photo last. It returns
+`{directionId, visual, functional, rationale: [{claim, briefFields}]}`; the stage wraps that
+into a Proposal (`r<round>-<direction>-a<attempt>`).
+
+Code checks: both IDs are in the right layer of *this* shortlist and not excluded; functional
+is present exactly when the direction has a functional layer; every `briefFields` entry is a
+real Brief path. Retry once; unknown Brief paths can be repaired (dropped); an invalid ID
+cannot, so the fallback is RETRIEVE's top-ranked non-excluded variant per layer, marked
+`source: "fallback"` on the proposal, the card ("fallback pick") and the report.
+
+## RENDER
+
+Image model, visual layer only, through v1's `generateProductPreview` (its prompt is now
+exported so v2 can hash it). The render file is named by
+`sha256(photo, productId, variantId, provider, model, promptHash, attempt)`, and in live mode the
+runtime's response cache returns an existing render for the same key without a new call (as
+long as the file still exists). A render counts against the round's budget before it runs; a
+refused render (budget spent) or a failed one leaves the proposal unrendered with a visible
+warning.
+
+The mock render paints the variant's swatch colour over the Brief's `windowRegion`. An
+optional `render` fixture overrides the colour (used to test off-colour renders).
+
+## PRESENT
+
+Code. Up to 3 cards: accepted proposals first; if fewer than 2 were accepted, the best
+REVISE'd ones are added and marked `unapproved` (with a warning); DROPped ones are never
+shown. With critique off (step 2), every direction's latest proposal is shown `unreviewed`.
+Each card has the render (the last faithful one), direction title and intent, the visual
+product, the functional product ("described, not rendered"), the rationale with its Brief
+field chips, and the critique verdict. Below the cards, a "What I assumed" chip for every
+inferred or assumed Brief field, least confident first; clicking one edits it (REACT).
 
 ## Tracing
 
@@ -224,3 +264,14 @@ Each of these was my call in place of asking. Change any of them in the file nam
     are unknown and reported as "unpriced".
 17. **PERCEIVE's fallback** is a no-model perception (k-means palette, low-confidence
     everything else). It is also PERCEIVE's baseline.
+18. **PERCEIVE also returns the window's position** (`windowRegion`, a box in image fractions).
+    It is not in your field list; I added it because the mock render and the faithfulness check
+    need to know where the covering is. A live render may move the window slightly; the box is
+    used as-is.
+19. **COMPOSE's fallback is RETRIEVE's top pick**, shown as a "fallback pick", rather than
+    dropping the direction. You see three options, and it is clear which one no model chose.
+20. **COMPOSE sees ≤ 16 swatches, not product form images.** The category name carries the
+    form; adding 8+ product photos per call would double the image count for little gain.
+    Easy to add if critique shows form confusion.
+21. **"Complementary" means opposite the room's overall hue** (share × chroma weighted), not
+    opposite the single most saturated accent.

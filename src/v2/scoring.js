@@ -7,7 +7,7 @@ import { deltaE2000, srgbToLab } from "../baseline/color.js";
 //   tonal          close to the room's dominant colours (v1's de2000-match)
 //   contrast       a clear but not clashing distance (v1's de2000-contrast)
 //   neutral-anchor low chroma, lightness near the dominant wall colour
-//   complementary  hue opposite the room's main accent, with some chroma
+//   complementary  hue opposite the room's overall hue, with some chroma
 
 const MATCH_DECAY = 25;
 const CONTRAST_TARGET = 35;
@@ -23,14 +23,11 @@ export function preparePalette(palette) {
   const total = entries.reduce((sum, c) => sum + (c.weight || 0), 0) || entries.length;
   for (const entry of entries) entry.w = (entry.weight || (total === entries.length ? 1 : 0)) / total;
   const dominant = [...entries].sort((a, b) => b.w - a.w)[0];
-  const accent = [...entries]
-    .filter((c) => c.w >= 0.05)
-    .sort((a, b) => chroma(b.lab) - chroma(a.lab))[0];
-  return { entries, dominant, accent };
+  return { entries, dominant };
 }
 
 export function colourScore(strategy, variantLab, palette) {
-  const { entries, dominant, accent } = palette;
+  const { entries, dominant } = palette;
   const weighted = (fn) => entries.reduce((sum, c) => sum + c.w * fn(deltaE2000(c.lab, variantLab)), 0);
 
   switch (strategy) {
@@ -44,9 +41,11 @@ export function colourScore(strategy, variantLab, palette) {
       return neutrality * (0.4 + 0.6 * closeness);
     }
     case "complementary": {
-      // With an all-neutral room, complement the dominant colour's hue instead.
-      const anchor = accent && chroma(accent.lab) >= 8 ? accent : dominant;
-      const target = (hue(anchor.lab) + 180) % 360;
+      // Complement the room's overall hue: the circular mean of palette hues,
+      // weighted by share × chroma, so a big muted wall and a small vivid accent
+      // both count. A single accent alone can point the wrong way (a warm lamp in a
+      // blue room would make "complementary" pick blue).
+      const target = (roomHue(entries) + 180) % 360;
       const distance = Math.min(Math.abs(hue(variantLab) - target), 360 - Math.abs(hue(variantLab) - target));
       const hueFit = Math.exp(-((distance / 40) ** 2));
       const hasColour = Math.min(1, chroma(variantLab) / 15);
@@ -92,6 +91,17 @@ export function preferenceScore(preferences, variant, variantLab, dominantLab) {
   const avoid = preferences.avoidColours.value;
   if (avoid.length > 0 && avoid.includes(variant.colorFamily)) return 0;
   return parts.length === 0 ? 0.5 : parts.reduce((s, v) => s + v, 0) / parts.length;
+}
+
+export function roomHue(entries) {
+  let x = 0;
+  let y = 0;
+  for (const c of entries) {
+    const weight = c.w * chroma(c.lab);
+    x += weight * Math.cos((hue(c.lab) * Math.PI) / 180);
+    y += weight * Math.sin((hue(c.lab) * Math.PI) / 180);
+  }
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
 function chroma(lab) {
