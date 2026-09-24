@@ -177,7 +177,21 @@ the orchestrator, so workflow and agent runs can be compared. Add `traces/` to `
   decision and the reason for it, and every assumption you made in place of asking me.
 
 ## Build order
-Each step is demo-able on its own. At the end of each step, run the offline checks below, commit, then stop and show me.
+Build all four steps as one continuous run; do not stop to check in between steps. After each
+step, run the offline checks below and commit, then carry on. When a decision is mine, make the
+most reasonable choice, record it in `docs/v2-design.md` under "Assumptions to review", and keep
+going. Stop only when the complete pipeline (steps 1–4) is integrated and every offline check
+passes, or for a real blocker. The one exception is the paid-call rule below: that still needs
+my go-ahead, but the build should not need any live calls.
+
+When done, show me:
+- what was built;
+- the offline check results;
+- the assumptions for me to review;
+- how to open the v2 UI and the review report on mock data;
+- the exact first live run you'd propose, with its estimated calls and images.
+
+Steps:
 1. Schemas, guidelines.json, runtime, registry, workflow orchestrator, and the stages
    PERCEIVE, BRIEF, PLAN and RETRIEVE, with a text-only output page. At this point it is
    already comparable to v1: it follows the guidelines, gives diverse results, and sends no
