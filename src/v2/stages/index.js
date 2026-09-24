@@ -1,6 +1,8 @@
 import { SHARED_SCHEMAS } from "../schemas/index.js";
 import brief from "./brief.js";
 import compose from "./compose.js";
+import critique from "./critique.js";
+import faithfulness from "./faithfulness.js";
 import perceive from "./perceive.js";
 import plan from "./plan.js";
 import present from "./present.js";
@@ -11,7 +13,7 @@ import retrieve from "./retrieve.js";
 // never imports them directly, and toolDefinitions() exposes the same stages to a
 // future tool-calling agent with no rewrite.
 
-export const STAGES = Object.fromEntries([perceive, brief, plan, retrieve, compose, render, present].map((stage) => [stage.name, stage]));
+export const STAGES = Object.fromEntries([perceive, brief, plan, retrieve, compose, render, faithfulness, critique, present].map((stage) => [stage.name, stage]));
 
 export function getStage(name) {
   const stage = STAGES[name];

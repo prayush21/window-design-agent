@@ -116,8 +116,14 @@ export function present(input, ctx) {
 function card(proposal, status, input, ctx) {
   const direction = input.directions.find((d) => d.id === proposal.directionId);
   const renders = input.renders.filter((r) => r.proposalId === proposal.proposalId);
+  // Never show a render that failed the colour check: it would misrepresent the product.
+  const checked = renders.filter((r) => input.faithfulness.some((f) => f.renderId === r.renderId));
   const faithfulRender =
-    renders.filter((r) => input.faithfulness.find((f) => f.renderId === r.renderId)?.pass).at(-1) || renders.at(-1) || null;
+    checked.length > 0
+      ? checked.filter((r) => input.faithfulness.find((f) => f.renderId === r.renderId).pass).at(-1) || null
+      : renders.at(-1) || null;
+  const renderNote =
+    renders.length === 0 ? "not rendered" : !faithfulRender ? "the render changed the product's colour, so it is not shown" : null;
   const critique = input.critiques.filter((c) => c.proposalId === proposal.proposalId).at(-1) || null;
   const faithfulness = faithfulRender ? input.faithfulness.find((f) => f.renderId === faithfulRender.renderId) || null : null;
 
@@ -129,6 +135,7 @@ function card(proposal, status, input, ctx) {
     status,
     source: proposal.source,
     renderUrl: faithfulRender ? `/v2-renders/${encodeURIComponent(faithfulRender.imagePath)}` : null,
+    renderNote,
     visual: productCard(proposal.visual, ctx),
     functional: proposal.functional ? productCard(proposal.functional, ctx) : null,
     rationale: proposal.rationale,

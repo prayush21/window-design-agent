@@ -6,7 +6,8 @@ import { roomLayers } from "../src/v2/guidelines.js";
 import { axisDifferences } from "../src/v2/stages/plan.js";
 import { validate } from "../src/v2/schemas/index.js";
 import { resolvePath } from "../src/v2/config.js";
-import { runAllRooms, testCatalog, testConfig } from "./helpers.mjs";
+import { evalRooms, newSession, runAllRooms, testCatalog, testConfig } from "./helpers.mjs";
+import { runSession } from "../src/v2/engine.js";
 
 // Offline check 4: the full orchestrator on every fixture room, mock mode.
 const config = testConfig();
@@ -104,6 +105,51 @@ test("a fallback proposal is visible as such in the presentation", () => {
   const fallback = session.proposals.find((p) => p.source === "fallback");
   assert.ok(fallback, "IMG_4298 has a fallback proposal");
   assert.equal(fallback.visual.variantId, session.shortlists[fallback.directionId].layers.visual.candidates[0].variantId);
+});
+
+test("critique loop: off-colour render is re-rendered, REVISE yields a new variant, DROP is never shown", () => {
+  const lrw = runs.find((r) => r.room.id === "living-room-window").session;
+  const failed = lrw.faithfulness.filter((f) => !f.pass);
+  assert.equal(failed.length, 1, "one off-colour render");
+  assert.ok(lrw.faithfulness.some((f) => f.proposalId === failed[0].proposalId && f.pass), "re-render passed");
+  assert.ok(lrw.warnings.some((w) => w.code === "render-off-colour"), "off-colour render is a visible warning");
+  assert.ok(lrw.decisions.some((d) => d.policy === "render-check" && d.decision === "rerender"));
+  const revised = lrw.proposals.find((p) => p.status === "revised");
+  const next = lrw.proposals.find((p) => p.directionId === revised.directionId && p.attempt === revised.attempt + 1);
+  assert.ok(next && next.excluded.includes(revised.visual.variantId), "revision excludes the rejected variant");
+  assert.equal(next.status, "accepted");
+
+  const up = runs.find((r) => r.room.id === "uploaded_room").session;
+  const dropped = up.proposals.find((p) => p.status === "dropped");
+  assert.ok(dropped);
+  assert.ok(!up.presentation.items.some((i) => i.proposalId === dropped.proposalId), "dropped proposals are not presented");
+  const unreviewed = up.presentation.items.find((i) => i.status === "unreviewed");
+  assert.ok(unreviewed, "a failed critique is shown as unreviewed, not as accepted");
+  assert.ok(up.warnings.some((w) => w.stage === "critique" && w.code === "fallback"));
+
+  const img = runs.find((r) => r.room.id === "IMG_4297").session;
+  assert.ok(img.warnings.some((w) => w.stage === "critique" && w.code === "retry"), "ACCEPT with a low score is retried");
+});
+
+test("every presented item is accepted or visibly marked otherwise", () => {
+  for (const { session } of runs) {
+    for (const item of session.presentation.items) {
+      const proposal = session.proposals.find((p) => p.proposalId === item.proposalId);
+      if (item.status === "accepted") assert.equal(proposal.status, "accepted");
+      else assert.ok(["unreviewed", "unapproved"].includes(item.status));
+    }
+  }
+});
+
+test("a tight render budget is respected and every refusal is a visible warning", async () => {
+  const tight = testConfig({ budget: { maxRenders: 3, maxRevisionsPerDirection: 2 } });
+  const room = evalRooms().find((r) => r.id === "living-room-window");
+  const session = newSession(room);
+  await runSession(session, { config: tight });
+  assert.ok(session.budget.rendersUsed <= 3, `used ${session.budget.rendersUsed}`);
+  const refusals = session.warnings.filter((w) => w.code === "render-budget").length;
+  const stopped = session.decisions.filter((d) => /budget/.test(d.reason)).length;
+  assert.ok(refusals + stopped > 0, "the budget visibly limited the run");
 });
 
 test("mock mode makes no paid calls: every model attempt went to the mock provider", () => {

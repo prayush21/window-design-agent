@@ -335,6 +335,78 @@
         }
       ],
       "note": "BROKEN on attempt 1: rationale missing (schema failure). Attempt 2 is valid."
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "f17d142cdd0b8702",
+        "directionId": "d1",
+        "variantId": "CUR2600801B9",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 5,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "Tan beige continues the wall; a full blackout drape suits a bedroom with strong morning sun.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "f17d142cdd0b8702",
+        "directionId": "d2",
+        "variantId": "CUR26018-P07",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 3,
+              "intent": 3,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "A cool sky blue is a clear counterpoint to the warm beige; acceptable, though less connected to the garden than the direction hoped.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "f17d142cdd0b8702",
+        "directionId": "d3",
+        "variantId": "CUR26021-P04",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "A soft off-white keeps the small room bright and neutral.",
+            "revisionHint": null
+          }
+        }
+      ]
     }
   ]
 }

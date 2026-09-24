@@ -206,6 +206,33 @@ warning.
 The mock render paints the variant's swatch colour over the Brief's `windowRegion`. An
 optional `render` fixture overrides the colour (used to test off-colour renders).
 
+## CRITIQUE
+
+Two parts, in this order, and they answer different questions.
+
+**Faithfulness (code, `stages/faithfulness.js`)**: did the render keep the product's colour?
+Crop the Brief's window region (inset 10% so the frame does not vote), k-means (3 clusters,
+Lab) and take the dominant cluster, then CIEDE2000 against the swatch colour. Pass if
+ΔE ≤ 15 (`config.faithfulness.threshold`). A failure is a *render* problem: the
+`render-check` policy re-renders once (a `render-off-colour` warning), and if the second render
+also fails, or no budget is left, the proposal is kept but shown without a render ("the
+render changed the product's colour"), never judged on a wrong image.
+
+**Design critique (VLM, `stages/critique.js`)**: only faithful renders reach it. Separate
+prompt, and by default a different provider (OpenAI) from COMPOSE (Gemini). It sees the room
+before, the swatch and the render, the Brief, the direction and the proposal's rationale, and
+scores harmony, intent, roomFit and installed 1–5 with a verdict. Code rejects an ACCEPT with
+any score below 3 (the rubric's own rule): retry once, then fallback. The fallback has no
+verdict (`UNREVIEWED`); the proposal is shown as "unreviewed", never as accepted.
+
+**Policies (`src/v2/policies/`)**: `render-check` (critique | rerender | unrendered) and
+`critique-verdict` (accept | revise | drop | stop-unapproved | accept-unreviewed). Pure
+functions of facts; each call is recorded as a decision with its inputs and reason. REVISE
+loops back to COMPOSE with the rejected variant excluded and the critic's hint, while the
+direction has revisions left (2), the round has renders left (6) and the shortlist has untried
+variants; otherwise the proposal stops as `revised` and may be shown as "unapproved" only if
+fewer than 2 were accepted.
+
 ## PRESENT
 
 Code. Up to 3 cards: accepted proposals first; if fewer than 2 were accepted, the best
@@ -275,3 +302,15 @@ Each of these was my call in place of asking. Change any of them in the file nam
     Easy to add if critique shows form confusion.
 21. **"Complementary" means opposite the room's overall hue** (share × chroma weighted), not
     opposite the single most saturated accent.
+22. **Faithfulness threshold ΔE2000 ≤ 15.** Mock renders measure ΔE < 1 when correct and ≈ 30
+    when off. Real renders add lighting and shading, so 15 is a guess to calibrate on the first
+    live renders (the report shows every ΔE).
+23. **A render that fails faithfulness twice is not shown**, and the proposal is not critiqued;
+    its card says why. Showing a wrong-colour render would misrepresent the product.
+24. **Critique fallback is "unreviewed"**, a fourth verdict value that only code produces, so a
+    broken critique can never read as an ACCEPT. Critique agreement counts model verdicts only.
+25. **A render budget refusal leaves the proposal unrendered** (visible warning), rather than
+    dropping it.
+26. **The critic's hint is passed to the revision** (`critiqueHint` in COMPOSE's input). It is not
+    part of COMPOSE's fixture key; the key uses the exclusion list, which already identifies the
+    revision.

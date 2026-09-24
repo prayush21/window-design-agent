@@ -26,7 +26,8 @@ const inputSchema = {
     round: { type: "integer", minimum: 1 },
     attempt: { type: "integer", minimum: 1 },
     exclude: { type: "array", items: nonEmpty },
-    feedback: { type: ["string", "null"] }
+    feedback: { type: ["string", "null"] },
+    critiqueHint: { type: ["string", "null"] }
   },
   additionalProperties: false
 };
@@ -174,7 +175,7 @@ function retrievalPick(input, source) {
   );
 }
 
-async function buildBlocks({ brief, direction, shortlist, roomPhoto, exclude = [], feedback }, ctx) {
+async function buildBlocks({ brief, direction, shortlist, roomPhoto, exclude = [], feedback, critiqueHint }, ctx) {
   const excluded = new Set(exclude);
   const blocks = [
     text(`You are the composition step of an interior-design agent for window coverings.
@@ -188,6 +189,7 @@ THE BRIEF (value, source, confidence):
 ${JSON.stringify(briefValues(brief), null, 2)}
 ${feedback ? `\nThe person said about an earlier proposal for this direction: "${feedback}". Respond to it.` : ""}
 ${excluded.size ? `\nAlready tried and rejected, do not choose: ${[...excluded].join(", ")}.` : ""}
+${critiqueHint ? `\nThe design critic said about the last pick: "${critiqueHint}"` : ""}
 
 Each candidate below is a text line followed by its swatch image. The swatch is the source of truth for colour and texture.`)
   ];

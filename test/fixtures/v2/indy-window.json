@@ -383,6 +383,78 @@
           }
         }
       ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "directionId": "d1",
+        "variantId": "SHS26002-P03",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 5,
+              "roomFit": 5,
+              "installed": 4
+            },
+            "reason": "A natural sheer shade softens light behind the desk without darkening the room; exactly the glare brief.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "directionId": "d2",
+        "variantId": "ZES2600401B7",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "A light grey zebra shade gives a clean, even backdrop for calls.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "directionId": "d3",
+        "variantId": "WOB26001-P05",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 3,
+              "installed": 4
+            },
+            "reason": "Oak slats warm the room and contrast with the black frame; slats control glare well, though they are heavier than the other two options.",
+            "revisionHint": null
+          }
+        }
+      ]
     }
   ]
 }

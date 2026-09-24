@@ -318,6 +318,162 @@
           }
         }
       ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "04dcec428a60c46c",
+        "directionId": "d1",
+        "variantId": "CUR2602701B1",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 5,
+              "intent": 5,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "The warm cream sheer nearly disappears into the wall and keeps the room bright.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "04dcec428a60c46c",
+        "directionId": "d2",
+        "variantId": "RMS26003-P08",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "REVISE",
+            "scores": {
+              "harmony": 2,
+              "intent": 3,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "The ash grey Roman shade reads flat and slightly dirty against the warm white wall.",
+            "revisionHint": "Try the white Roman shade: same tailored form, cleaner against the wall."
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "04dcec428a60c46c",
+        "directionId": "d2",
+        "variantId": "RMS26004-P07",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "The white Roman shade gives the tailored anchor the direction wanted without dulling the wall.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "04dcec428a60c46c",
+        "directionId": "d3",
+        "variantId": "CUR26022-P01",
+        "renderAttempt": 2
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "Silver grey panels frame the window and echo the sofa, as intended.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "render",
+      "key": {
+        "photo": "04dcec428a60c46c",
+        "variantId": "CUR26022-P01",
+        "attempt": 1
+      },
+      "note": "BROKEN: the first render of d3 comes back magenta (the image model changed the colour). Faithfulness must fail and the policy must re-render; attempt 2 uses the true swatch colour.",
+      "responses": [
+        {
+          "json": {
+            "colourHex": "#c2185b"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "04dcec428a60c46c",
+        "roomType": "living-room",
+        "directionId": "d2",
+        "exclude": [
+          "RMS26003-P08"
+        ],
+        "preferences": null,
+        "feedback": null
+      },
+      "note": "Revision after critique REVISE on RMS26003-P08.",
+      "responses": [
+        {
+          "json": {
+            "directionId": "d2",
+            "visual": {
+              "productId": "RMS26004",
+              "variantId": "RMS26004-P07"
+            },
+            "functional": {
+              "productId": "ZES26002",
+              "variantId": "ZES2600202B7"
+            },
+            "rationale": [
+              {
+                "claim": "A white Roman shade keeps the tailored, low-chroma anchor but stays clean against the warm white wall.",
+                "briefFields": [
+                  "palette",
+                  "styleTags"
+                ]
+              },
+              {
+                "claim": "The light greige zebra shade still handles street privacy.",
+                "briefFields": [
+                  "needs.privacy"
+                ]
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }

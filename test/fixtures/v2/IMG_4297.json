@@ -347,6 +347,93 @@
           }
         }
       ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d1",
+        "variantId": "CUR2600702B9",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 5,
+              "installed": 4
+            },
+            "reason": "The warm beige drape reads as part of the wall and closes the dark window completely; it makes the room feel calmer than the striped curtain.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d2",
+        "variantId": "CUR2600803B9",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "A quiet off-white anchor; the maroon frame stays the only accent, as intended.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d3",
+        "variantId": "CUR2600904B9",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "broken": "check",
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 2
+            },
+            "reason": "Slate blue-grey stands apart from the walls and cools the maroon frame.",
+            "revisionHint": null
+          }
+        },
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 3
+            },
+            "reason": "Slate blue-grey stands apart from the walls and cools the maroon frame; the drape height is plausible for the track.",
+            "revisionHint": null
+          }
+        }
+      ],
+      "note": "BROKEN on attempt 1: ACCEPT with an 'installed' score of 2 contradicts the rubric (check failure). Attempt 2 is consistent."
     }
   ]
 }

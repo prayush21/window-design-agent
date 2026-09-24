@@ -1,6 +1,7 @@
 import { MockFixtureMissError } from "../../mock-provider.js";
 import { LiveCallRefusedError } from "../providers.js";
 import { BudgetExceededError, createBudget, runStage } from "../runtime.js";
+import { getPolicy } from "../policies/index.js";
 import { getStage } from "../stages/index.js";
 
 // The fixed workflow: perceive → brief → plan → retrieve → (compose → render →
@@ -10,6 +11,17 @@ import { getStage } from "../stages/index.js";
 // Only this file knows the order. Stages are looked up by name in the registry.
 
 export const name = "workflow";
+
+// Policy inputs recorded in the trace: the facts, without whole objects.
+function summarizeFacts(facts) {
+  const out = {};
+  for (const [key, value] of Object.entries(facts)) {
+    if (key === "critique") out.critique = { verdict: value.verdict, scores: value.scores, source: value.source };
+    else if (key === "faithfulness") out.faithfulness = { deltaE: value.deltaE, pass: value.pass, threshold: value.threshold };
+    else out[key] = value;
+  }
+  return out;
+}
 
 const isFatal = (error) => error instanceof MockFixtureMissError || error instanceof LiveCallRefusedError;
 
@@ -41,31 +53,127 @@ export async function* run(session, ctx) {
     return { type: "warning", warning };
   }
 
-  // COMPOSE → RENDER for one direction.
+  function decide(policyName, facts, meta) {
+    const result = getPolicy(policyName)(facts);
+    const entry = {
+      policy: policyName,
+      decision: result.decision,
+      reason: result.reason,
+      round: session.round,
+      directionId: meta.directionId ?? null,
+      proposalId: meta.proposalId ?? null,
+      inputs: summarizeFacts(facts),
+      at: new Date().toISOString()
+    };
+    session.decisions.push(entry);
+    return { result, event: { type: "decision", decision: entry } };
+  }
+
+  // COMPOSE → RENDER → FAITHFULNESS → CRITIQUE for one direction, looping on REVISE
+  // within the budget. Every branch taken is a recorded policy decision.
   async function* designDirection(directionId) {
     const direction = session.directions.find((d) => d.id === directionId);
     const shortlist = session.shortlists[directionId];
     const exclude = [...(session.cursor.exclude?.[directionId] || [])];
     const feedback = session.cursor.feedback?.[directionId] || null;
-    const attempt = session.proposals.filter((p) => p.round === session.round && p.directionId === directionId).length + 1;
+    const critiqueOn = ctx.config.critique.enabled;
+    let critiqueHint = null;
 
-    let proposal;
-    try {
-      proposal = yield* step(
-        "compose",
-        { brief: session.brief, direction, shortlist, roomPhoto: session.input.roomPhoto, round: session.round, attempt, exclude, feedback },
-        { directionId }
+    while (true) {
+      const attempt = session.proposals.filter((p) => p.round === session.round && p.directionId === directionId).length + 1;
+      let proposal;
+      try {
+        proposal = yield* step(
+          "compose",
+          { brief: session.brief, direction, shortlist, roomPhoto: session.input.roomPhoto, round: session.round, attempt, exclude: [...exclude], feedback, critiqueHint },
+          { directionId }
+        );
+      } catch (error) {
+        if (isFatal(error)) throw error;
+        yield warn("compose-failed", `No proposal for ${directionId}: ${error.message}`, { directionId });
+        return;
+      }
+      session.proposals.push(proposal);
+      yield { type: "proposal", proposal };
+      const meta = { directionId, proposalId: proposal.proposalId };
+
+      const render = yield* renderAndCheck(proposal, critiqueOn);
+      if (!critiqueOn || !render) {
+        proposal.status = "unreviewed";
+        return;
+      }
+
+      let critique;
+      try {
+        critique = yield* step(
+          "critique",
+          { brief: session.brief, direction, proposal, render, roomPhoto: session.input.roomPhoto },
+          meta
+        );
+      } catch (error) {
+        if (isFatal(error)) throw error;
+        yield warn("critique-failed", `${proposal.proposalId} not critiqued: ${error.message}`, meta);
+        proposal.status = "unreviewed";
+        return;
+      }
+      session.critiques.push(critique);
+      yield { type: "critique", critique };
+
+      const tried = new Set([...exclude, proposal.visual.variantId]);
+      const { result, event } = decide(
+        "critique-verdict",
+        {
+          critique,
+          revisionsUsed: budget.revisionsUsed(directionId),
+          maxRevisions: ctx.config.budget.maxRevisionsPerDirection,
+          rendersRemaining: budget.rendersRemaining(),
+          candidatesLeft: shortlist.layers.visual.candidates.filter((c) => !tried.has(c.variantId)).length
+        },
+        meta
       );
-    } catch (error) {
-      if (isFatal(error)) throw error;
-      yield warn("compose-failed", `No proposal for ${directionId}: ${error.message}`, { directionId });
+      yield event;
+
+      if (result.decision === "accept") proposal.status = "accepted";
+      else if (result.decision === "accept-unreviewed") proposal.status = "unreviewed";
+      else if (result.decision === "drop") proposal.status = "dropped";
+      else if (result.decision === "stop-unapproved") proposal.status = "revised";
+      else if (result.decision === "revise") {
+        proposal.status = "revised";
+        budget.recordRevision(directionId);
+        exclude.push(proposal.visual.variantId);
+        critiqueHint = critique.revisionHint || critique.reason;
+        continue;
+      }
       return;
     }
-    session.proposals.push(proposal);
-    yield { type: "proposal", proposal };
+  }
 
-    yield* renderProposal(proposal, 1);
-    proposal.status = "unreviewed";
+  // Render, check the colour, re-render once if the policy says so. Returns the
+  // faithful render, or null when there is none to critique.
+  async function* renderAndCheck(proposal, checkColour) {
+    const meta = { directionId: proposal.directionId, proposalId: proposal.proposalId };
+    for (let attempt = 1; ; attempt += 1) {
+      const render = yield* renderProposal(proposal, attempt);
+      if (!render) return null;
+      if (!checkColour) return render;
+
+      const faith = yield* step("faithfulness", { render, windowRegion: session.brief.windowRegion.value }, meta);
+      session.faithfulness.push(faith);
+      yield { type: "faithfulness", faithfulness: faith };
+
+      const { result, event } = decide(
+        "render-check",
+        { faithfulness: faith, renderAttempt: attempt, rendersRemaining: budget.rendersRemaining() },
+        meta
+      );
+      yield event;
+      if (result.decision === "critique") return render;
+      if (result.decision === "rerender") yield warn("render-off-colour", `${proposal.proposalId} render ${attempt}: ${result.reason}`, meta);
+      if (result.decision === "unrendered") {
+        yield warn("render-unfaithful", `${proposal.proposalId}: ${result.reason}`, meta);
+        return null;
+      }
+    }
   }
 
   // Returns the render, or null (with a visible warning) when the budget is spent
@@ -130,7 +238,7 @@ export async function* run(session, ctx) {
         faithfulness: session.faithfulness,
         critiques: session.critiques,
         round: session.round,
-        critiqueEnabled: false
+        critiqueEnabled: ctx.config.critique.enabled
       });
       yield { type: "presentation", presentation: session.presentation };
       session.cursor = { next: "await-reaction" };

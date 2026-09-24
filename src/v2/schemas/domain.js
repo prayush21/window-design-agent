@@ -273,7 +273,8 @@ export const critique = {
   properties: {
     proposalId: nonEmpty,
     renderId: nonEmpty,
-    verdict: { enum: VERDICTS },
+    // UNREVIEWED is never a model answer: it marks a critique that failed and fell back.
+    verdict: { enum: [...VERDICTS, "UNREVIEWED"] },
     scores: {
       type: "object",
       required: ["harmony", "intent", "roomFit", "installed"],
