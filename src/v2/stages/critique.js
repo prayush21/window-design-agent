@@ -80,7 +80,9 @@ export default {
   async run(input, ctx) {
     const blocks = withCorrection(await buildBlocks(input, ctx), ctx);
     const response = await ctx.providers.llm({ blocks, fixtureKey: this.fixtureKey(input) });
-    const r = response.result || {};
+    // gemini-3.1-pro-preview sometimes wraps the object in a one-element array.
+    const raw = Array.isArray(response.result) && response.result.length === 1 ? response.result[0] : response.result;
+    const r = raw || {};
     return {
       proposalId: input.proposal.proposalId,
       renderId: input.render.renderId,

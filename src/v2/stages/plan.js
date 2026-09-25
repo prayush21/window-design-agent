@@ -258,6 +258,7 @@ Light levels: bright (let light through), filtered (soften), dark (block).
 
 Rules:
 - Use only the allowed categories, spelled exactly. Each layer lists 1-4 categories.
+- Each layer's categories must together offer at least ${ctx.config.retrieve.minPerLayer} variants (the counts above). A category with fewer must be combined with another category in the same layer.
 - Every pair of directions must differ on at least two of: visual categories, colourStrategy, lightLevel.
 - Respect stated fields over inferred ones and inferred over assumed ones.
 ${previousDirections.length > 0 ? `- The person has seen these directions already; propose new ones that respond to their feedback:\n${previousDirections.map((d) => `  ${d.id}: ${d.title} (${d.colourStrategy}, ${d.lightLevel}, ${d.layers.visual.join("/")})`).join("\n")}` : ""}

@@ -31,7 +31,10 @@ export const DEFAULT_CONFIG = {
   faithfulness: {
     // CIEDE2000 between the render's dominant covering colour and the swatch.
     // Provisional: calibrate on the first live renders (see docs/v2-design.md).
-    threshold: 15
+    threshold: 15,
+    // Lightness counts half: real fabric in a lit room is darker or lighter than a flat
+    // swatch photo, while a hue change means the wrong product (textile practice, CMC 2:1).
+    kL: 2
   },
   critique: { enabled: true },
   present: { min: 2, max: 3 },

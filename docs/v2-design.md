@@ -358,6 +358,22 @@ Live is on through `DESIGN_AGENT_LIVE=1` in `.env`, with render routed to Gemini
 (a different provider from COMPOSE, by design), so until credits are added every proposal is
 shown "unreviewed".
 
+## Live quirks fixed (2026-09-24, first sessions through the UI)
+
+- **Faithfulness measured the glass, not the curtains.** Drapery hangs beside the window, so
+  the window-box check read the view outside (ΔE 42–46 on correct navy curtains), wasted two
+  re-renders and hid a good proposal. It now measures the pixels the render changed relative
+  to the room photo, in a wide band around the window (sides, down to the floor), and falls
+  back to the window box only when under 4% changed (`method` records which). Lightness
+  counts half (CIEDE2000 kL = 2, as in textile matching): fabric in a lit room is darker than
+  a flat swatch photo, while a hue change still fails. On the six real renders from that
+  session, the worst correct product now measures 14.5 (threshold 15).
+- **COMPOSE cited direction fields** (`direction.texture`, `direction.intent`) alongside valid
+  Brief fields. Unknown citations are now dropped with a `rationale-fields-dropped` warning
+  instead of a paid retry; a claim with no valid citation still fails.
+- **CRITIQUE (`gemini-3.1-pro-preview`) wrapped its verdict in a one-element array.** Unwrapped.
+- **PLAN put Wood Blinds (4 variants) alone in a layer.** The prompt now states the ≥ 5 rule.
+
 ## Tracing
 
 `traces/<sessionId>.json` (schema `v2.trace`): orchestrator name, mode, config summary,

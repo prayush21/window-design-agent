@@ -71,7 +71,7 @@ export default {
   async run(input, ctx) {
     const blocks = withCorrection(await buildBlocks(input, ctx), ctx);
     const response = await ctx.providers.llm({ blocks, fixtureKey: this.fixtureKey(input) });
-    return toProposal(response.result, input, "model");
+    return toProposal(dropUnknownFields(response.result, ctx), input, "model");
   },
 
   check(output, input) {
@@ -103,6 +103,23 @@ export default {
     return retrievalPick(input, "fallback");
   }
 };
+
+// A claim citing a non-Brief path (e.g. "direction.texture") keeps its valid
+// citations; the unknown ones are dropped with a visible warning instead of paying
+// for a retry. A claim left with no valid citation still fails the check.
+function dropUnknownFields(result, ctx) {
+  if (!Array.isArray(result?.rationale)) return result;
+  for (const claim of result.rationale) {
+    if (!Array.isArray(claim?.briefFields)) continue;
+    const unknown = claim.briefFields.filter((f) => !BRIEF_FIELD_PATHS.includes(f));
+    const known = claim.briefFields.filter((f) => BRIEF_FIELD_PATHS.includes(f));
+    if (unknown.length > 0 && known.length > 0) {
+      claim.briefFields = known;
+      ctx.warn("rationale-fields-dropped", `COMPOSE cited ${unknown.join(", ")}, which ${unknown.length === 1 ? "is" : "are"} not Brief fields; kept ${known.join(", ")}.`);
+    }
+  }
+  return result;
+}
 
 export function toProposal(result, input, source) {
   return {
@@ -216,7 +233,7 @@ Each candidate below is a text line followed by its swatch image. The swatch is 
  "visual": {"productId": "...", "variantId": "..."},
  "functional": ${shortlist.layers.functional ? '{"productId": "...", "variantId": "..."}' : "null"},
  "rationale": [{"claim": "one sentence", "briefFields": ["palette", "needs.privacy", ...]}]}
-briefFields must be from: ${BRIEF_FIELD_PATHS.join(", ")}.
+briefFields must be from this list only (not direction or product fields): ${BRIEF_FIELD_PATHS.join(", ")}.
 The last image is the room.`),
     image(await encodeRoomImage(`data:image/jpeg;base64,${bytes.toString("base64")}`))
   );

@@ -215,7 +215,7 @@ export async function* run(session, ctx) {
       if (!render) return null;
       if (!checkColour) return render;
 
-      const faith = yield* step("faithfulness", { render, windowRegion: session.brief.windowRegion.value }, meta);
+      const faith = yield* step("faithfulness", { render, windowRegion: session.brief.windowRegion.value, roomPhoto: session.input.roomPhoto }, meta);
       session.faithfulness.push(faith);
       yield { type: "faithfulness", faithfulness: faith };
 
