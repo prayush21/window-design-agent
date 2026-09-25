@@ -76,6 +76,12 @@ export function resolveConfig(overrides = {}, env = process.env) {
     if (env[`V2_${key}_MODEL`]) config.stages[stage].model = env[`V2_${key}_MODEL`];
   }
 
+  // Output folders can be redirected (the test suite points them at a temp dir, so
+  // tests never write into the traces you are reading).
+  for (const [key, name] of [["traces", "V2_TRACES_DIR"], ["renders", "V2_RENDERS_DIR"], ["uploads", "V2_UPLOADS_DIR"]]) {
+    if (env[name] && !overrides.paths?.[key]) config.paths[key] = env[name];
+  }
+
   const liveAllowed = env.DESIGN_AGENT_LIVE === "1";
   const requested = overrides.mode ?? (liveAllowed ? "live" : "mock");
   if (requested === "live" && !liveAllowed) {
