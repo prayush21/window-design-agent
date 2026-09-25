@@ -77,7 +77,8 @@ async function start() {
     roomId: state.roomId || undefined,
     imageDataUrl: state.imageDataUrl || undefined,
     text: $("#prefs").value.trim() || null,
-    roomType: $("#room-type").value || null
+    roomType: $("#room-type").value || null,
+    fresh: $("#fresh").checked
   };
   await stream(`/api/v2/sessions?orchestrator=${encodeURIComponent($("#orchestrator").value)}`, body);
 }
@@ -85,7 +86,7 @@ async function start() {
 async function react(reaction) {
   if (!state.session || state.busy) return;
   $("#react-note").textContent = "";
-  await stream(`/api/v2/sessions/${state.session.sessionId}/react?orchestrator=${encodeURIComponent($("#orchestrator").value)}`, { reaction });
+  await stream(`/api/v2/sessions/${state.session.sessionId}/react?orchestrator=${encodeURIComponent($("#orchestrator").value)}`, { reaction, fresh: $("#fresh").checked });
 }
 
 async function stream(url, body) {
@@ -120,7 +121,7 @@ async function stream(url, body) {
 function onEvent(event) {
   switch (event.type) {
     case "session":
-      $("#session-id").textContent = event.sessionId;
+      $("#session-id").textContent = `${event.sessionId}${event.mode === "live" ? (event.cache ? " · cache on" : " · fresh run") : ""}`;
       $("#trace-link").href = `/api/v2/traces/${event.sessionId}`;
       $("#trace-section").hidden = false;
       break;

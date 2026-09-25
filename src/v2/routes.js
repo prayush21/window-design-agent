@@ -88,9 +88,12 @@ export async function handleV2Request(req, res) {
   }
 }
 
+// `fresh: true` turns the live response cache off for this run.
+const runConfig = (body) => resolveConfig(body.fresh ? { cache: { enabled: false } } : {});
+
 async function startSession(req, res, url) {
   const body = await readJson(req);
-  const config = resolveConfig();
+  const config = runConfig(body);
   const orchestrator = url.searchParams.get("orchestrator") || body.orchestrator || "workflow";
 
   let roomPhotoPath;
@@ -116,7 +119,7 @@ async function startSession(req, res, url) {
 
 async function reactToSession(req, res, url, sessionId) {
   const body = await readJson(req);
-  const config = resolveConfig();
+  const config = runConfig(body);
   const session = readSession(sessionId);
   session.pendingReaction = body.reaction;
   const orchestrator = url.searchParams.get("orchestrator") || session.orchestrator || "workflow";
@@ -128,7 +131,7 @@ async function reactToSession(req, res, url, sessionId) {
 async function streamRun(res, session, { config, orchestrator }) {
   res.writeHead(200, { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" });
   const write = (event) => res.write(`${JSON.stringify(event)}\n`);
-  write({ type: "session", sessionId: session.sessionId, mode: config.mode, orchestrator, roomPhoto: photoUrl(session) });
+  write({ type: "session", sessionId: session.sessionId, mode: config.mode, cache: config.cache.enabled, orchestrator, roomPhoto: photoUrl(session) });
   try {
     await runSession(session, { config, orchestrator, onEvent: write });
   } catch {

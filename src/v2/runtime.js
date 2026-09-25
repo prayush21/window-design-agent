@@ -252,7 +252,7 @@ export function correctionNote(errors) {
 }
 
 function cachePath(stage, input, ctx) {
-  if (ctx.config.mode !== "live" || !ctx.cacheDir || stage.kind === "code") return null;
+  if (ctx.config.mode !== "live" || !ctx.cacheDir || stage.kind === "code" || ctx.config.cache?.enabled === false) return null;
   const key = stage.cacheKey ? stage.cacheKey(input, ctx) : stableStringify({ input, stage: ctx.config.stages[stage.name] });
   const hash = crypto.createHash("sha256").update(`${stage.name}:${stage.version || 1}:${key}`).digest("hex").slice(0, 32);
   return path.join(ctx.cacheDir, "stages", stage.name, `${hash}.json`);

@@ -37,6 +37,9 @@ export const DEFAULT_CONFIG = {
     kL: 2
   },
   critique: { enabled: true },
+  // Live mode reuses a saved model answer when a stage gets identical input. Turn it
+  // off ("fresh run") to make every call again, e.g. to see how much answers vary.
+  cache: { enabled: true },
   present: { min: 2, max: 3 },
   paths: {
     traces: "traces",
@@ -105,6 +108,7 @@ export function summarizeConfig(config) {
     retrieve: config.retrieve,
     faithfulness: config.faithfulness,
     critique: config.critique,
+    cache: config.cache,
     present: config.present
   };
 }

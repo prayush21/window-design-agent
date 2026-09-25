@@ -16,6 +16,7 @@ const USAGE = `Usage: npm run v2:run -- [options]
   --baseline              every model stage uses its no-model baseline
   --orchestrator <name>   default: workflow
   --repeat <n>            run each room n times (noise floor for npm run v2:eval)
+  --fresh                 do not reuse saved model answers (live cache off)
   --max-renders <n>       render budget per round (default 6)
   --max-revisions <n>     critique revisions per direction (default 2)
   --resume <session.json> continue a saved session from its cursor
@@ -35,14 +36,15 @@ export async function main(argv = process.argv.slice(2)) {
   if (args.maxRevisions !== undefined) budget.maxRevisionsPerDirection = args.maxRevisions;
   let config;
   try {
-    config = resolveConfig({ ...(mode ? { mode } : {}), budget });
+    config = resolveConfig({ ...(mode ? { mode } : {}), budget, ...(args.fresh ? { cache: { enabled: false } } : {}) });
   } catch (error) {
     process.stderr.write(`\n${error.message}\n`);
     return 2;
   }
   process.stdout.write(
     `\nv2 ${args.orchestrator} · mode ${config.mode}${config.mode === "live" ? " · PAID CALLS" : " · no paid calls"} · ` +
-      `budget ${config.budget.maxRenders} renders/round, ${config.budget.maxRevisionsPerDirection} revisions/direction\n\n`
+      `budget ${config.budget.maxRenders} renders/round, ${config.budget.maxRevisionsPerDirection} revisions/direction` +
+      `${config.mode === "live" ? ` · cache ${config.cache.enabled ? "on" : "off (fresh)"}` : ""}\n\n`
   );
 
   const jobs = [];
@@ -118,6 +120,7 @@ function parseArgs(argv) {
     else if (flag === "--orchestrator") args.orchestrator = next();
     else if (flag === "--resume") args.resume = next();
     else if (flag === "--react") args.react = next();
+    else if (flag === "--fresh") args.fresh = true;
     else if (flag === "--max-renders") args.maxRenders = Math.max(0, Number(next()));
     else if (flag === "--max-revisions") args.maxRevisions = Math.max(0, Number(next()));
     else if (flag === "--repeat") args.repeat = Math.max(1, Number(next()) || 1);

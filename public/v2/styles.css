@@ -122,3 +122,5 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .feedback { display: flex; gap: 0.5rem; margin-top: 1rem; }
 .decisions { font-size: 0.82rem; padding-left: 1.2rem; }
 .decisions li { margin: 0.2rem 0; }
+.check { display: flex; gap: 0.4rem; align-items: center; font-size: 0.8rem; color: var(--muted); margin: 0.6rem 0 0.2rem; }
+.check input { margin: 0; }

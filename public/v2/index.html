@@ -42,6 +42,9 @@
           <span>Room type (optional; otherwise inferred)</span>
           <select id="room-type"><option value="">Infer from the photo</option></select>
         </label>
+        <label class="check" title="Live mode normally reuses a saved model answer when a step gets exactly the same input. Tick to call every model again.">
+          <input id="fresh" type="checkbox" /> Fresh run (don't reuse saved answers)
+        </label>
         <button id="run" type="button" disabled>Design this window</button>
         <p id="status" class="muted small" role="status"></p>
       </aside>
