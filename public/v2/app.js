@@ -60,6 +60,28 @@ async function init() {
     const text = $("#feedback").value.trim();
     if (text) react({ kind: "feedback", proposalId: null, text });
   });
+
+  const sessionId = new URLSearchParams(location.search).get("session");
+  if (sessionId) await loadSession(sessionId);
+}
+
+// ?session=<id> reopens a saved session: same render as a finished run, and
+// reactions still work if it stopped at await-reaction.
+async function loadSession(sessionId) {
+  resetResults();
+  setStatus(`Loading session ${sessionId}…`);
+  try {
+    const session = await getJson(`/api/v2/sessions/${encodeURIComponent(sessionId)}`);
+    onEvent({ type: "session", sessionId: session.sessionId });
+    if (session.roomPhotoUrl) {
+      $("#room-preview").src = session.roomPhotoUrl;
+      $("#room-preview").hidden = false;
+    }
+    onEvent({ type: "final", session });
+  } catch (error) {
+    setStatus("");
+    showWarnings([{ code: "session-load-failed", message: error.message, stage: null }]);
+  }
 }
 
 function selectRoom({ roomId = null, imageDataUrl = null, url }) {
@@ -124,6 +146,7 @@ function onEvent(event) {
       $("#session-id").textContent = `${event.sessionId}${event.mode === "live" ? (event.cache ? " · cache on" : " · fresh run") : ""}`;
       $("#trace-link").href = `/api/v2/traces/${event.sessionId}`;
       $("#trace-section").hidden = false;
+      setSessionParam(event.sessionId);
       break;
     case "stage-start":
       setStatus(`Running ${event.stage}${event.directionId ? ` · ${event.directionId}` : ""}…`);
@@ -382,6 +405,12 @@ function setBusy(busy, message) {
   $("#run").disabled = busy || (!state.roomId && !state.imageDataUrl);
   document.body.classList.toggle("busy", busy);
   if (message) setStatus(message);
+}
+
+function setSessionParam(sessionId) {
+  const url = new URL(location.href);
+  url.searchParams.set("session", sessionId);
+  history.replaceState(null, "", url);
 }
 
 function setStatus(message) {

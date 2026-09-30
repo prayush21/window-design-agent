@@ -63,7 +63,9 @@ export async function handleV2Request(req, res) {
     }
     const sessionMatch = url.pathname.match(/^\/api\/v2\/sessions\/([A-Za-z0-9_-]+)(\/react)?$/);
     if (sessionMatch && req.method === "GET" && !sessionMatch[2]) {
-      return sendJson(res, readSession(sessionMatch[1]));
+      const file = sessionFile(sessionMatch[1]);
+      if (!fs.existsSync(file)) return sendJson(res, { error: "Session not found." }, 404);
+      return sendJson(res, publicSession(loadSession(file)));
     }
     if (sessionMatch && req.method === "POST" && sessionMatch[2]) {
       return await reactToSession(req, res, url, sessionMatch[1]);
@@ -191,9 +193,12 @@ function readAllTraces() {
     .filter((t) => t.traceVersion === 1);
 }
 
+function sessionFile(sessionId) {
+  return path.join(resolvePath(resolveConfig(), "traces"), "sessions", `${sessionId}.session.json`);
+}
+
 function readSession(sessionId) {
-  const config = resolveConfig();
-  const file = path.join(resolvePath(config, "traces"), "sessions", `${sessionId}.session.json`);
+  const file = sessionFile(sessionId);
   if (!fs.existsSync(file)) throw new Error(`Session ${sessionId} not found.`);
   return loadSession(file);
 }
