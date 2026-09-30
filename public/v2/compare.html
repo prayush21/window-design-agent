@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Compare v1 and v2</title>
+    <link rel="stylesheet" href="/v2/styles.css" />
+    <style>
+      main { padding: 1.2rem 1.4rem; max-width: 1300px; }
+      .pair { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
+      .sides { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+      @media (max-width: 860px) { .sides { grid-template-columns: minmax(0, 1fr); } }
+      .side { border: 1px solid var(--line); border-radius: 9px; padding: 0.6rem; }
+      .side img { width: 100%; border-radius: 6px; display: block; }
+      .side .imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.4rem; }
+      .room img { width: 100%; border-radius: 8px; }
+      .actions { display: flex; gap: 0.4rem; margin-top: 0.8rem; flex-wrap: wrap; }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Window design agent · v2 · evals</p>
+        <h1>v1 vs v2, blind</h1>
+      </div>
+      <div class="topbar-right"><a href="/v2/">Back to v2</a><a href="/v2/label-critique.html">Label critiques</a></div>
+    </header>
+    <main>
+      <p class="muted small">
+        For each room: which product would you rather put in this window? The two sides are v2's first presented proposal and
+        v1's top pick, in random order. Both are shown the same way (swatch and product photo, no render), so the comparison is
+        about the choice, not the rendering. Judgments go to <code>evals/pairwise.json</code>; <code>npm run v2:eval</code>
+        reports v2's win rate.
+      </p>
+      <p id="meta" class="muted small"></p>
+      <div id="pairs"></div>
+    </main>
+    <script type="module">
+      const $ = (s) => document.querySelector(s);
+      const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+      let data;
+
+      async function load() {
+        data = await (await fetch("/api/v2/eval/pairs")).json();
+        $("#meta").innerHTML = `v1 runs from <code>${esc(data.v1RunsDir)}</code>${data.skippedV1Picks.length ? ` · ${data.skippedV1Picks.length} v1 picks skipped (IDs not in the current catalog)` : ""} · ${data.judgments.length} judgments so far`;
+        $("#pairs").innerHTML = data.pairs.length ? data.pairs.map(pair).join("") : `<p class="muted">No v2 sessions with a presentation yet.</p>`;
+      }
+
+      function pair(p) {
+        if (!p.v1) return `<section class="pair"><h3>${esc(p.roomId)}</h3><p class="muted small">No v1 model run for this room in ${esc(data.v1RunsDir)}. Run v1's eval (a paid call) or set V1_RUNS_DIR.</p></section>`;
+        const leftIsV1 = Math.random() < 0.5;
+        const [left, right] = leftIsV1 ? [p.v1, p.v2] : [p.v2, p.v1];
+        return `<section class="pair" data-room="${esc(p.roomId)}" data-left="${leftIsV1 ? "v1" : "v2"}">
+          <h3>${esc(p.roomId)}</h3>
+          <div class="sides">
+            <div class="room"><img src="${p.roomPhotoUrl}" alt="room" loading="lazy" /></div>
+            ${side("A", left)}${side("B", right)}
+          </div>
+          <div class="actions">
+            <button type="button" data-choice="left">A is better</button>
+            <button type="button" data-choice="right">B is better</button>
+            <button type="button" class="secondary" data-choice="tie">About the same</button>
+            <input type="text" placeholder="why (optional)" data-note style="max-width:24rem" />
+          </div>
+        </section>`;
+      }
+
+      function side(label, s) {
+        return `<div class="side"><h4>${label}</h4><div class="imgs">
+          ${s.swatchImageUrl ? `<img src="${s.swatchImageUrl}" alt="swatch" loading="lazy" />` : `<div class="swatch-dot big" style="background:${esc(s.hex)}"></div>`}
+          ${s.productImageUrl ? `<img src="${s.productImageUrl}" alt="product" loading="lazy" />` : ""}
+          </div><p class="small">${esc(s.name)} · ${esc(s.category)}</p></div>`;
+      }
+
+      $("#pairs").addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-choice]");
+        if (!button) return;
+        const section = button.closest("[data-room]");
+        const p = data.pairs.find((x) => x.roomId === section.dataset.room);
+        const leftWas = section.dataset.left;
+        const choice = button.dataset.choice;
+        const winner = choice === "tie" ? "tie" : choice === "left" ? leftWas : leftWas === "v1" ? "v2" : "v1";
+        const body = {
+          roomId: p.roomId, winner, leftWas, note: section.querySelector("[data-note]").value,
+          v1: { runId: p.v1.runId, variantId: p.v1.variantId },
+          v2: { sessionId: p.v2.sessionId, proposalId: p.v2.proposalId, variantId: p.v2.variantId, mode: p.v2.mode }
+        };
+        const response = await fetch("/api/v2/eval/pairwise", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (!response.ok) return alert((await response.json()).error);
+        section.innerHTML = `<h3>${esc(p.roomId)}</h3><p class="small">Saved. You preferred <b>${winner === "tie" ? "neither" : winner}</b>.</p>`;
+      });
+      load();
+    </script>
+  </body>
+</html>

@@ -1,4 +1,5 @@
 import { RANKING_IMAGE_SIZES, encodeCatalogImage, encodeRoomImage } from "./image-cache.js";
+import { callMockProvider } from "./mock-provider.js";
 
 const PROVIDERS = new Set(["openai", "gemini", "anthropic"]);
 
@@ -174,7 +175,14 @@ export function image(encodedImage) {
 
 // One-shot multimodal call with the same provider plumbing the reranker uses.
 // Callers build their own blocks; the response is parsed as JSON.
-export async function callProvider({ provider, model, blocks }) {
+//
+// provider "mock" answers from hand-written fixtures (src/mock-provider.js) and
+// never reaches the network. It is deliberately not in PROVIDERS, so v1 routes
+// that go through normalizeProvider cannot select it.
+export async function callProvider({ provider, model, blocks, mock }) {
+  if (String(provider).toLowerCase() === "mock") {
+    return callMockProvider({ blocks, mock, parseJson: parseJsonFromText });
+  }
   const normalizedProvider = normalizeProvider(provider);
   return normalizedProvider === "openai"
     ? callOpenAI({ model, blocks })
@@ -354,7 +362,7 @@ function extractOpenAIText(json) {
   );
 }
 
-function parseJsonFromText(text) {
+export function parseJsonFromText(text) {
   if (!text) throw new Error("Provider returned an empty response.");
 
   try {

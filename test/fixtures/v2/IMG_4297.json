@@ -1,0 +1,704 @@
+{
+  "room": "IMG_4297",
+  "fixtures": [
+    {
+      "stage": "perceive",
+      "key": {
+        "photo": "c63d8f0277c1ea34"
+      },
+      "note": "BROKEN on attempt 1: the response is cut off mid-object (invalid JSON). Attempt 2 is valid.",
+      "responses": [
+        {
+          "broken": "json",
+          "rawText": "{\"roomType\": {\"value\": \"bedroom\", \"confidence\": 0.6, \"evidence\": \"suitcase and small personal room\"}, \"windowType\": {\"value\": \"double-hung\", \"confidence\": 0.7, \"evidence\": \"two stacked sashes"
+        },
+        {
+          "json": {
+            "roomType": {
+              "value": "bedroom",
+              "confidence": 0.6,
+              "evidence": "small private room with a packed suitcase; reads as a dorm bedroom"
+            },
+            "windowType": {
+              "value": "double-hung",
+              "confidence": 0.7,
+              "evidence": "two stacked sashes in a painted metal frame"
+            },
+            "windowShape": {
+              "value": "tall rectangle",
+              "confidence": 0.8,
+              "evidence": "opening is taller than wide"
+            },
+            "windowRegion": {
+              "value": {
+                "x": 0.46,
+                "y": 0.28,
+                "w": 0.42,
+                "h": 0.55
+              },
+              "confidence": 0.75,
+              "evidence": "maroon frame edges"
+            },
+            "palette": {
+              "value": [
+                {
+                  "hex": "#d9c8b8",
+                  "name": "warm beige wall",
+                  "role": "wall",
+                  "weight": 0.45
+                },
+                {
+                  "hex": "#e6dccf",
+                  "name": "cream textured ceiling",
+                  "role": "ceiling",
+                  "weight": 0.12
+                },
+                {
+                  "hex": "#ecebe8",
+                  "name": "white striped curtain",
+                  "role": "textile",
+                  "weight": 0.18
+                },
+                {
+                  "hex": "#6b2326",
+                  "name": "maroon window frame",
+                  "role": "trim",
+                  "weight": 0.08
+                },
+                {
+                  "hex": "#3a302a",
+                  "name": "dark night glazing",
+                  "role": "other",
+                  "weight": 0.17
+                }
+              ],
+              "confidence": 0.7,
+              "evidence": "night photo under warm artificial light"
+            },
+            "materials": {
+              "value": [
+                "painted drywall",
+                "textured ceiling",
+                "painted metal window frame",
+                "cotton curtain"
+              ],
+              "confidence": 0.6
+            },
+            "styleTags": {
+              "value": [
+                "simple",
+                "institutional",
+                "warm"
+              ],
+              "confidence": 0.5
+            },
+            "lightLevel": {
+              "value": "dim",
+              "confidence": 0.6,
+              "evidence": "taken at night; no daylight visible"
+            },
+            "existingCovering": {
+              "value": "white pinch-pleat curtain with thin navy horizontal stripes on a ceiling track",
+              "confidence": 0.9
+            },
+            "needs": {
+              "privacy": {
+                "value": "high",
+                "confidence": 0.6,
+                "evidence": "bedroom, lit interior visible from outside at night"
+              },
+              "blackout": {
+                "value": "medium",
+                "confidence": 0.5,
+                "evidence": "sleeping room; unknown street lighting"
+              },
+              "glare": {
+                "value": "low",
+                "confidence": 0.5
+              },
+              "moisture": {
+                "value": "low",
+                "confidence": 0.7
+              },
+              "safety": {
+                "value": "low",
+                "confidence": 0.6
+              }
+            },
+            "notes": "Window unit (AC/heater) sits under the sill; coverings should clear it."
+          }
+        }
+      ]
+    },
+    {
+      "stage": "plan",
+      "key": {
+        "roomType": "bedroom",
+        "palette": [
+          "#d9c8b8",
+          "#e6dccf",
+          "#ecebe8",
+          "#6b2326",
+          "#3a302a"
+        ],
+        "needs": {
+          "privacy": "high",
+          "blackout": "medium",
+          "glare": "low",
+          "moisture": "low",
+          "safety": "low"
+        },
+        "preferences": null,
+        "previous": []
+      },
+      "responses": [
+        {
+          "json": {
+            "directions": [
+              {
+                "id": "d1",
+                "title": "Warm cocoon",
+                "intent": "Wrap the window in heavy drapery that melts into the beige walls so the room feels enclosed and restful at night.",
+                "layers": {
+                  "visual": [
+                    "Blackout Drapery"
+                  ],
+                  "functional": [
+                    "Blackout Roller Shades"
+                  ]
+                },
+                "colourStrategy": "tonal",
+                "lightLevel": "dark",
+                "textureNote": "Dense, softly napped weave that absorbs light."
+              },
+              {
+                "id": "d2",
+                "title": "Soft daylight layers",
+                "intent": "Keep the room calm and neutral by day with a sheer behind a low-chroma drape that closes fully for sleep.",
+                "layers": {
+                  "visual": [
+                    "Blackout Drapery"
+                  ],
+                  "functional": [
+                    "Sheer Curtains"
+                  ]
+                },
+                "colourStrategy": "neutral-anchor",
+                "lightLevel": "filtered",
+                "textureNote": "Linen-look drape over an airy voile."
+              },
+              {
+                "id": "d3",
+                "title": "Framed in contrast",
+                "intent": "Answer the maroon frame with a drape that clearly stands apart from the walls, and keep days bright with a cellular shade.",
+                "layers": {
+                  "visual": [
+                    "Blackout Drapery"
+                  ],
+                  "functional": [
+                    "Cellular Shades",
+                    "Blackout Cellular Shades"
+                  ]
+                },
+                "colourStrategy": "contrast",
+                "lightLevel": "bright",
+                "textureNote": "Matte, slightly heavier cloth for a crisp edge."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "bedroom",
+        "directionId": "d1",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d1",
+            "visual": {
+              "productId": "CUR26007",
+              "variantId": "CUR2600702B9"
+            },
+            "functional": {
+              "productId": "RLS26006",
+              "variantId": "RLS2600601B9"
+            },
+            "rationale": [
+              {
+                "claim": "A light warm beige drape sits a shade off the beige walls, so the window reads as part of the wall at night.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "Blackout drape over a blackout roller shade gives a fully dark, private room when the lights are on after dark.",
+                "briefFields": [
+                  "needs.privacy",
+                  "needs.blackout",
+                  "roomType"
+                ]
+              },
+              {
+                "claim": "A soft, dense weave replaces the thin striped cotton curtain and adds the cosiness the room lacks.",
+                "briefFields": [
+                  "existingCovering",
+                  "materials",
+                  "styleTags"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "bedroom",
+        "directionId": "d2",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d2",
+            "visual": {
+              "productId": "CUR26008",
+              "variantId": "CUR2600803B9"
+            },
+            "functional": {
+              "productId": "CUR26027",
+              "variantId": "CUR2602701B1"
+            },
+            "rationale": [
+              {
+                "claim": "A soft off-white drape anchors the window without adding colour to an already warm, busy corner.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "A warm cream sheer behind it keeps daytime light soft while the drape closes fully for sleep.",
+                "briefFields": [
+                  "lightLevel",
+                  "needs.blackout"
+                ]
+              },
+              {
+                "claim": "Both layers stay pale, so the maroon frame remains the only accent.",
+                "briefFields": [
+                  "palette",
+                  "styleTags"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "bedroom",
+        "directionId": "d3",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d3",
+            "visual": {
+              "productId": "CUR26009",
+              "variantId": "CUR2600904B9"
+            },
+            "functional": {
+              "productId": "CES26004",
+              "variantId": "CES26004-P02"
+            },
+            "rationale": [
+              {
+                "claim": "Slate blue-grey stands clearly apart from the beige walls and cools the strong maroon frame instead of competing with it.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "A natural-tone blackout cellular shade handles privacy and darkness while the drape stays open by day.",
+                "briefFields": [
+                  "needs.privacy",
+                  "needs.blackout"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d1",
+        "variantId": "CUR2600702B9",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 5,
+              "installed": 4
+            },
+            "reason": "The warm beige drape reads as part of the wall and closes the dark window completely; it makes the room feel calmer than the striped curtain.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d2",
+        "variantId": "CUR2600803B9",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "A quiet off-white anchor; the maroon frame stays the only accent, as intended.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d3",
+        "variantId": "CUR2600904B9",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "broken": "check",
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 2
+            },
+            "reason": "Slate blue-grey stands apart from the walls and cools the maroon frame.",
+            "revisionHint": null
+          }
+        },
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 3
+            },
+            "reason": "Slate blue-grey stands apart from the walls and cools the maroon frame; the drape height is plausible for the track.",
+            "revisionHint": null
+          }
+        }
+      ],
+      "note": "BROKEN on attempt 1: ACCEPT with an 'installed' score of 2 contradicts the rubric (check failure). Attempt 2 is consistent."
+    },
+    {
+      "stage": "plan",
+      "key": {
+        "roomType": "nursery",
+        "palette": [
+          "#d9c8b8",
+          "#e6dccf",
+          "#ecebe8",
+          "#6b2326",
+          "#3a302a"
+        ],
+        "needs": {
+          "privacy": "high",
+          "blackout": "high",
+          "glare": "low",
+          "moisture": "low",
+          "safety": "high"
+        },
+        "preferences": "this is a nursery",
+        "previous": [
+          "d1",
+          "d2",
+          "d3"
+        ]
+      },
+      "note": "Round 2, after the person said 'this is a nursery'. Nursery is a single-layer room: functional is null.",
+      "responses": [
+        {
+          "json": {
+            "directions": [
+              {
+                "id": "d4",
+                "title": "Soft blackout cocoon",
+                "intent": "A warm, full-blackout drape that blends into the beige walls for daytime naps.",
+                "layers": {
+                  "visual": [
+                    "Blackout Drapery"
+                  ],
+                  "functional": null
+                },
+                "colourStrategy": "tonal",
+                "lightLevel": "dark",
+                "textureNote": "Soft, heavy weave that dampens sound."
+              },
+              {
+                "id": "d5",
+                "title": "Cordless calm",
+                "intent": "Low-chroma cellular shades that sit close to the wall, with no loose cords near a cot.",
+                "layers": {
+                  "visual": [
+                    "Blackout Cellular Shades",
+                    "Cellular Shades"
+                  ],
+                  "functional": null
+                },
+                "colourStrategy": "neutral-anchor",
+                "lightLevel": "dark",
+                "textureNote": "Matte honeycomb fabric."
+              },
+              {
+                "id": "d6",
+                "title": "Gentle daylight",
+                "intent": "A softly coloured blackout cellular shade that answers the warm walls and can stay part-open for play time.",
+                "layers": {
+                  "visual": [
+                    "Blackout Cellular Shades"
+                  ],
+                  "functional": null
+                },
+                "colourStrategy": "complementary",
+                "lightLevel": "filtered",
+                "textureNote": "Smooth, pastel-leaning fabric."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "nursery",
+        "directionId": "d4",
+        "exclude": [],
+        "preferences": "this is a nursery",
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d4",
+            "visual": {
+              "productId": "CUR26007",
+              "variantId": "CUR2600702B9"
+            },
+            "functional": null,
+            "rationale": [
+              {
+                "claim": "A light warm beige blackout drape blends with the walls and darkens the room fully for naps.",
+                "briefFields": [
+                  "palette",
+                  "needs.blackout",
+                  "roomType"
+                ]
+              },
+              {
+                "claim": "Heavy fabric also softens street noise for a sleeping baby.",
+                "briefFields": [
+                  "roomType",
+                  "preferences.text"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "nursery",
+        "directionId": "d5",
+        "exclude": [],
+        "preferences": "this is a nursery",
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d5",
+            "visual": {
+              "productId": "CES26005",
+              "variantId": "CES26005-P03"
+            },
+            "functional": null,
+            "rationale": [
+              {
+                "claim": "A white blackout cellular shade sits flat against the window with no loose cords near a cot.",
+                "briefFields": [
+                  "needs.safety",
+                  "roomType"
+                ]
+              },
+              {
+                "claim": "Low chroma keeps the small room calm.",
+                "briefFields": [
+                  "palette"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "roomType": "nursery",
+        "directionId": "d6",
+        "exclude": [],
+        "preferences": "this is a nursery",
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d6",
+            "visual": {
+              "productId": "CES26001",
+              "variantId": "CES26001-P04"
+            },
+            "functional": null,
+            "rationale": [
+              {
+                "claim": "A soft blue answers the warm beige walls without being loud.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "Blackout cellular fabric still darkens the room when fully lowered.",
+                "briefFields": [
+                  "needs.blackout"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d4",
+        "variantId": "CUR2600702B9",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "Warm and fully dark; suits a nursery, though the drape's cords and hems should stay out of reach.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d5",
+        "variantId": "CES26005-P03",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 5,
+              "roomFit": 5,
+              "installed": 4
+            },
+            "reason": "Cordless, flat and fully dark: the safest fit for a nursery.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "c63d8f0277c1ea34",
+        "directionId": "d6",
+        "variantId": "CES26001-P04",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 3,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "A gentle blue that adds a little colour to the room while keeping blackout.",
+            "revisionHint": null
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "design-agent", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 3000 }
+    { "name": "design-agent-v2", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 3001 }
   ]
 }

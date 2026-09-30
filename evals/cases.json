@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "IMG_4297",
+      "photo": "rooms/IMG_4297.jpg",
+      "notes": "",
+      "expectFailure": false,
+      "labels": {
+        "acceptable": [],
+        "unacceptable": [],
+        "ideal": []
+      }
+    },
+    {
+      "id": "IMG_4298",
+      "photo": "rooms/IMG_4298.jpg",
+      "notes": "",
+      "expectFailure": false,
+      "labels": {
+        "acceptable": [],
+        "unacceptable": [],
+        "ideal": []
+      }
+    },
+    {
+      "id": "indy-window",
+      "photo": "rooms/indy-window.JPG",
+      "notes": "",
+      "expectFailure": false,
+      "labels": {
+        "acceptable": [],
+        "unacceptable": [],
+        "ideal": []
+      }
+    },
+    {
+      "id": "living-room-window",
+      "photo": "rooms/living-room-window.jpg",
+      "notes": "",
+      "expectFailure": false,
+      "labels": {
+        "acceptable": [],
+        "unacceptable": [],
+        "ideal": []
+      }
+    },
+    {
+      "id": "uploaded_room",
+      "photo": "rooms/uploaded_room.jpg",
+      "notes": "",
+      "expectFailure": false,
+      "labels": {
+        "acceptable": [],
+        "unacceptable": [],
+        "ideal": []
+      }
+    }
+  ]
+}

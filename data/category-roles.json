@@ -1,0 +1,239 @@
+{
+  "version": 1,
+  "derivedFrom": "data/guidelines.json",
+  "notes": [
+    "role = which layer lists name the category across all rooms: visual, functional or both.",
+    "A category listed only in single-layer rooms keeps the role of that list; single-layer rooms still use it as their primary covering (see docs/v2-design.md)."
+  ],
+  "categories": {
+    "Aluminum Blinds": {
+      "role": "both",
+      "visualIn": [
+        "basement"
+      ],
+      "functionalIn": [
+        "kitchen",
+        "bathroom",
+        "pantry",
+        "mud-room",
+        "laundry-room"
+      ]
+    },
+    "Blackout Cellular Shades": {
+      "role": "both",
+      "visualIn": [
+        "kids-room",
+        "basement",
+        "entry"
+      ],
+      "functionalIn": [
+        "bedroom",
+        "home-office",
+        "kids-room",
+        "nursery",
+        "closet",
+        "mud-room",
+        "media-room",
+        "sunroom"
+      ]
+    },
+    "Blackout Drapery": {
+      "role": "both",
+      "visualIn": [
+        "bedroom",
+        "kids-room"
+      ],
+      "functionalIn": [
+        "nursery",
+        "media-room"
+      ]
+    },
+    "Blackout Roller Shades": {
+      "role": "both",
+      "visualIn": [
+        "kids-room"
+      ],
+      "functionalIn": [
+        "bedroom",
+        "kids-room",
+        "media-room"
+      ]
+    },
+    "Cellular Shades": {
+      "role": "both",
+      "visualIn": [
+        "kids-room",
+        "basement",
+        "entry"
+      ],
+      "functionalIn": [
+        "bedroom",
+        "home-office",
+        "kids-room",
+        "nursery",
+        "closet",
+        "mud-room",
+        "media-room",
+        "sunroom"
+      ]
+    },
+    "Cloth Blinds": {
+      "role": "both",
+      "visualIn": [
+        "breakfast-nook"
+      ],
+      "functionalIn": [
+        "dining-room",
+        "closet"
+      ]
+    },
+    "Drapery Panels": {
+      "role": "visual",
+      "visualIn": [
+        "living-room",
+        "dining-room"
+      ],
+      "functionalIn": []
+    },
+    "Louvered Shutters": {
+      "role": "both",
+      "visualIn": [
+        "home-office"
+      ],
+      "functionalIn": [
+        "dining-room"
+      ]
+    },
+    "Outdoor & Patio Shades": {
+      "role": "functional",
+      "visualIn": [],
+      "functionalIn": [
+        "garage",
+        "sunroom"
+      ]
+    },
+    "Roller Shades": {
+      "role": "both",
+      "visualIn": [
+        "kitchen",
+        "bathroom",
+        "basement"
+      ],
+      "functionalIn": [
+        "living-room",
+        "dining-room",
+        "home-office",
+        "study",
+        "closet",
+        "pantry",
+        "mud-room",
+        "laundry-room"
+      ]
+    },
+    "Roman Shades": {
+      "role": "visual",
+      "visualIn": [
+        "living-room",
+        "breakfast-nook",
+        "study",
+        "entry"
+      ],
+      "functionalIn": []
+    },
+    "Sheer Curtains": {
+      "role": "both",
+      "visualIn": [
+        "living-room",
+        "dining-room",
+        "breakfast-nook",
+        "entry",
+        "hall"
+      ],
+      "functionalIn": [
+        "bedroom",
+        "kids-room"
+      ]
+    },
+    "Sheer Shades": {
+      "role": "both",
+      "visualIn": [
+        "dining-room",
+        "home-office",
+        "breakfast-nook",
+        "entry"
+      ],
+      "functionalIn": [
+        "closet"
+      ]
+    },
+    "Sheer Vertical Blinds": {
+      "role": "both",
+      "visualIn": [
+        "living-room",
+        "dining-room",
+        "breakfast-nook"
+      ],
+      "functionalIn": [
+        "closet"
+      ]
+    },
+    "Solar Shades": {
+      "role": "both",
+      "visualIn": [
+        "kitchen",
+        "hall"
+      ],
+      "functionalIn": [
+        "living-room",
+        "home-office",
+        "bathroom",
+        "laundry-room",
+        "garage",
+        "sunroom"
+      ]
+    },
+    "Vertical Blinds": {
+      "role": "visual",
+      "visualIn": [
+        "home-office"
+      ],
+      "functionalIn": []
+    },
+    "Vinyl Blinds": {
+      "role": "both",
+      "visualIn": [
+        "bathroom"
+      ],
+      "functionalIn": [
+        "kitchen",
+        "pantry",
+        "mud-room",
+        "laundry-room"
+      ]
+    },
+    "Wood Blinds": {
+      "role": "both",
+      "visualIn": [
+        "living-room",
+        "home-office",
+        "breakfast-nook"
+      ],
+      "functionalIn": [
+        "closet"
+      ]
+    },
+    "Zebra Shades": {
+      "role": "both",
+      "visualIn": [
+        "home-office",
+        "kitchen",
+        "breakfast-nook"
+      ],
+      "functionalIn": [
+        "living-room",
+        "closet",
+        "sunroom"
+      ]
+    }
+  }
+}

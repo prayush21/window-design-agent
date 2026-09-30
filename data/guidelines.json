@@ -1,0 +1,324 @@
+{
+  "version": 1,
+  "source": "docs/window-design-guidelines.txt (from docs/Window Design Guidelines.pdf)",
+  "notes": [
+    "Guideline product names are mapped onto exact catalog category names in nameMap. A name that has no catalog category is listed in `unmapped` with the rooms that cite it; it is never dropped silently.",
+    "rooms.<id>.visual / functional hold the guideline names as written (guidelineNames) and the resolved catalog categories (categories).",
+    "Some rooms list only one layer. See docs/v2-design.md, 'Single-layer rooms': the listed layer becomes the primary (visual) covering and the functional layer is null.",
+    "needsProfile is not in the source text. It is our reading of each room's core needs onto the Brief's needs scale and is used only as an `assumed` default (see docs/v2-design.md, Assumptions to review)."
+  ],
+  "aliases": {
+    "Blackout Curtains": "Blackout Drapery",
+    "Blackout Curtain": "Blackout Drapery",
+    "Curtains": "Drapery Panels",
+    "Zebra / Dual Shades": "Zebra Shades",
+    "Sheer Curtain": "Sheer Curtains"
+  },
+  "nameMap": {
+    "Sheer Curtains": { "catalog": ["Sheer Curtains"], "via": "exact" },
+    "Sheer Curtain": { "catalog": ["Sheer Curtains"], "via": "alias (singular form)" },
+    "Curtains": { "catalog": ["Drapery Panels"], "via": "alias" },
+    "Roman Shades": { "catalog": ["Roman Shades"], "via": "exact" },
+    "Wood Blinds": { "catalog": ["Wood Blinds"], "via": "exact" },
+    "Sheer Vertical Blinds": { "catalog": ["Sheer Vertical Blinds"], "via": "exact" },
+    "Roller Shades": { "catalog": ["Roller Shades"], "via": "exact" },
+    "Zebra / Dual Shades": { "catalog": ["Zebra Shades"], "via": "alias" },
+    "Zebra Shades": { "catalog": ["Zebra Shades"], "via": "exact" },
+    "Solar Shades": { "catalog": ["Solar Shades"], "via": "exact" },
+    "Blackout Curtains": { "catalog": ["Blackout Drapery"], "via": "alias" },
+    "Blackout Curtain": { "catalog": ["Blackout Drapery"], "via": "alias (singular form)" },
+    "Blackout Drapery": { "catalog": ["Blackout Drapery"], "via": "exact" },
+    "Cellular Shades": {
+      "catalog": ["Cellular Shades", "Blackout Cellular Shades"],
+      "via": "assumption: the catalog splits cellular shades by opacity; the guideline name covers both (see Assumptions to review)"
+    },
+    "Blackout Roller Shades": { "catalog": ["Blackout Roller Shades"], "via": "exact" },
+    "Drapery Panels": { "catalog": ["Drapery Panels"], "via": "exact" },
+    "Sheer Shades": { "catalog": ["Sheer Shades"], "via": "exact" },
+    "Louvered Shutters": { "catalog": ["Louvered Shutters"], "via": "exact" },
+    "Cloth Blinds": { "catalog": ["Cloth Blinds"], "via": "exact" },
+    "Vertical Blinds": { "catalog": ["Vertical Blinds"], "via": "exact" },
+    "Vinyl Blinds": { "catalog": ["Vinyl Blinds"], "via": "exact" },
+    "Aluminum Blinds": { "catalog": ["Aluminum Blinds"], "via": "exact" },
+    "Outdoor & Patio Shades": { "catalog": ["Outdoor & Patio Shades"], "via": "exact" },
+    "Stirpe Bamboo Curtain": { "catalog": [], "unmapped": true },
+    "Blackout Roman Shades": { "catalog": [], "unmapped": true },
+    "Faux Wood Blinds": { "catalog": [], "unmapped": true },
+    "Blackout Zebra Shades": { "catalog": [], "unmapped": true },
+    "Top-down Bottom-up Shades": { "catalog": [], "unmapped": true },
+    "Cordless Systems": { "catalog": [], "unmapped": true }
+  },
+  "unmapped": [
+    {
+      "name": "Stirpe Bamboo Curtain",
+      "reason": "Not in the catalog (v1's window-products-v1 had 'Strip Bamboo Curtain'; the V2 catalog does not).",
+      "rooms": ["living-room", "dining-room", "home-office", "bathroom", "breakfast-nook", "entry", "hall"]
+    },
+    {
+      "name": "Blackout Roman Shades",
+      "reason": "Not in the catalog. Roman Shades exist but none are blackout; not substituted.",
+      "rooms": ["bedroom", "kids-room", "nursery", "media-room"]
+    },
+    {
+      "name": "Faux Wood Blinds",
+      "reason": "Not in the catalog. Wood Blinds exist; not substituted because faux wood is chosen for moisture resistance.",
+      "rooms": ["basement"]
+    },
+    {
+      "name": "Blackout Zebra Shades",
+      "reason": "Not in the catalog. The 'Blackout Zebra Shades' folder was merged into Zebra Shades by the 2026-09-11 clean-up, and no zebra variant is tagged blackout.",
+      "rooms": ["nursery"]
+    },
+    {
+      "name": "Top-down Bottom-up Shades",
+      "reason": "An operating system, not a product category. Catalog products carry `operation: null`, so it cannot be matched yet.",
+      "rooms": ["kitchen"]
+    },
+    {
+      "name": "Cordless Systems",
+      "reason": "A safety feature, not a product category. Catalog products carry `childSafe: null`, so it cannot be matched yet.",
+      "rooms": ["kids-room"]
+    }
+  ],
+  "catalogCategories": {
+    "Aluminum Blinds": { "referencedBy": ["Aluminum Blinds"] },
+    "Blackout Cellular Shades": { "referencedBy": ["Cellular Shades"] },
+    "Blackout Drapery": { "referencedBy": ["Blackout Curtains", "Blackout Curtain", "Blackout Drapery"] },
+    "Blackout Roller Shades": { "referencedBy": ["Blackout Roller Shades"] },
+    "Cellular Shades": { "referencedBy": ["Cellular Shades"] },
+    "Cloth Blinds": { "referencedBy": ["Cloth Blinds"] },
+    "Drapery Panels": { "referencedBy": ["Curtains", "Drapery Panels"] },
+    "Louvered Shutters": { "referencedBy": ["Louvered Shutters"] },
+    "Outdoor & Patio Shades": { "referencedBy": ["Outdoor & Patio Shades"] },
+    "Roller Shades": { "referencedBy": ["Roller Shades"] },
+    "Roman Shades": { "referencedBy": ["Roman Shades"] },
+    "Sheer Curtains": { "referencedBy": ["Sheer Curtains", "Sheer Curtain"] },
+    "Sheer Shades": { "referencedBy": ["Sheer Shades"] },
+    "Sheer Vertical Blinds": { "referencedBy": ["Sheer Vertical Blinds"] },
+    "Solar Shades": { "referencedBy": ["Solar Shades"] },
+    "Vertical Blinds": { "referencedBy": ["Vertical Blinds"] },
+    "Vinyl Blinds": { "referencedBy": ["Vinyl Blinds"] },
+    "Wood Blinds": { "referencedBy": ["Wood Blinds"] },
+    "Zebra Shades": { "referencedBy": ["Zebra / Dual Shades", "Zebra Shades"] }
+  },
+  "rooms": {
+    "living-room": {
+      "label": "Living Room",
+      "coreNeeds": ["Light control", "Maximize exterior views", "Layered daylighting", "Material coordination with interior design"],
+      "needsProfile": { "privacy": "medium", "blackout": "low", "glare": "medium", "moisture": "low", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Sheer Curtains", "Curtains", "Roman Shades", "Wood Blinds", "Sheer Vertical Blinds", "Stirpe Bamboo Curtain"],
+        "categories": ["Sheer Curtains", "Drapery Panels", "Roman Shades", "Wood Blinds", "Sheer Vertical Blinds"]
+      },
+      "functional": {
+        "guidelineNames": ["Roller Shades", "Zebra / Dual Shades", "Solar Shades"],
+        "categories": ["Roller Shades", "Zebra Shades", "Solar Shades"]
+      }
+    },
+    "bedroom": {
+      "label": "Bedroom",
+      "coreNeeds": ["Blackout & privacy", "Quiet comfort", "Cozy atmosphere", "Sleep optimization"],
+      "needsProfile": { "privacy": "high", "blackout": "high", "glare": "low", "moisture": "low", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Blackout Curtains", "Blackout Roman Shades"],
+        "categories": ["Blackout Drapery"]
+      },
+      "functional": {
+        "guidelineNames": ["Sheer Curtains", "Cellular Shades", "Blackout Roller Shades"],
+        "categories": ["Sheer Curtains", "Cellular Shades", "Blackout Cellular Shades", "Blackout Roller Shades"]
+      }
+    },
+    "dining-room": {
+      "label": "Dining Room",
+      "coreNeeds": ["Soft natural light", "Visual harmony", "Dining comfort"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "medium", "moisture": "low", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Sheer Curtains", "Drapery Panels", "Sheer Shades", "Sheer Vertical Blinds", "Stirpe Bamboo Curtain"],
+        "categories": ["Sheer Curtains", "Drapery Panels", "Sheer Shades", "Sheer Vertical Blinds"]
+      },
+      "functional": {
+        "guidelineNames": ["Roller Shades", "Louvered Shutters", "Cloth Blinds"],
+        "categories": ["Roller Shades", "Louvered Shutters", "Cloth Blinds"]
+      }
+    },
+    "home-office": {
+      "label": "Home Office",
+      "coreNeeds": ["Glare control", "Productivity support", "Clean visual background"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "high", "moisture": "low", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Sheer Shades", "Zebra Shades", "Louvered Shutters", "Stirpe Bamboo Curtain", "Wood Blinds", "Vertical Blinds"],
+        "categories": ["Sheer Shades", "Zebra Shades", "Louvered Shutters", "Wood Blinds", "Vertical Blinds"]
+      },
+      "functional": {
+        "guidelineNames": ["Cellular Shades", "Solar Shades", "Roller Shades"],
+        "categories": ["Cellular Shades", "Blackout Cellular Shades", "Solar Shades", "Roller Shades"]
+      }
+    },
+    "kids-room": {
+      "label": "Kid's Room",
+      "coreNeeds": ["Safety", "Gentle daylight", "Easy maintenance", "Sleep blackout"],
+      "needsProfile": { "privacy": "medium", "blackout": "high", "glare": "low", "moisture": "low", "safety": "high" },
+      "visual": {
+        "guidelineNames": ["Blackout Curtain", "Blackout Roman Shades", "Blackout Roller Shades", "Cellular Shades"],
+        "categories": ["Blackout Drapery", "Blackout Roller Shades", "Cellular Shades", "Blackout Cellular Shades"]
+      },
+      "functional": {
+        "guidelineNames": ["Sheer Curtains", "Cellular Shades", "Blackout Roller Shades", "Cordless Systems"],
+        "categories": ["Sheer Curtains", "Cellular Shades", "Blackout Cellular Shades", "Blackout Roller Shades"]
+      }
+    },
+    "kitchen": {
+      "label": "Kitchen",
+      "coreNeeds": ["Easy to clean", "Heat & stain resistance", "Glare reduction"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "high", "moisture": "medium", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Roller Shades", "Solar Shades", "Zebra Shades"],
+        "categories": ["Roller Shades", "Solar Shades", "Zebra Shades"]
+      },
+      "functional": {
+        "guidelineNames": ["Vinyl Blinds", "Aluminum Blinds", "Top-down Bottom-up Shades"],
+        "categories": ["Vinyl Blinds", "Aluminum Blinds"]
+      }
+    },
+    "bathroom": {
+      "label": "Bathroom",
+      "coreNeeds": ["Privacy", "Moisture resistance", "Soft daylight"],
+      "needsProfile": { "privacy": "high", "blackout": "low", "glare": "low", "moisture": "high", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Vinyl Blinds", "Roller Shades", "Stirpe Bamboo Curtain"],
+        "categories": ["Vinyl Blinds", "Roller Shades"]
+      },
+      "functional": {
+        "guidelineNames": ["Aluminum Blinds", "Solar Shades"],
+        "categories": ["Aluminum Blinds", "Solar Shades"]
+      }
+    },
+    "breakfast-nook": {
+      "label": "Breakfast Nook",
+      "coreNeeds": ["Morning daylight", "Cozy atmosphere", "Soft privacy"],
+      "needsProfile": { "privacy": "medium", "blackout": "low", "glare": "medium", "moisture": "low", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Sheer Curtains", "Roman Shades", "Sheer Shades", "Sheer Vertical Blinds", "Stirpe Bamboo Curtain", "Wood Blinds", "Cloth Blinds", "Zebra Shades"],
+        "categories": ["Sheer Curtains", "Roman Shades", "Sheer Shades", "Sheer Vertical Blinds", "Wood Blinds", "Cloth Blinds", "Zebra Shades"]
+      },
+      "functional": { "guidelineNames": [], "categories": [] }
+    },
+    "nursery": {
+      "label": "Nursery",
+      "coreNeeds": ["Gentle sleep environment", "Safety control", "Blackout support"],
+      "needsProfile": { "privacy": "medium", "blackout": "high", "glare": "low", "moisture": "low", "safety": "high" },
+      "visual": { "guidelineNames": [], "categories": [] },
+      "functional": {
+        "guidelineNames": ["Cellular Shades", "Blackout Curtain", "Blackout Roman Shades", "Blackout Zebra Shades"],
+        "categories": ["Cellular Shades", "Blackout Cellular Shades", "Blackout Drapery"]
+      }
+    },
+    "study": {
+      "label": "Study",
+      "coreNeeds": ["Focus support", "Glare reduction", "Calm atmosphere"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "high", "moisture": "low", "safety": "low" },
+      "visual": { "guidelineNames": ["Roman Shades"], "categories": ["Roman Shades"] },
+      "functional": { "guidelineNames": ["Roller Shades"], "categories": ["Roller Shades"] }
+    },
+    "closet": {
+      "label": "Closet",
+      "coreNeeds": ["UV protection", "Visual cleanliness", "Soft lighting"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "medium", "moisture": "low", "safety": "low" },
+      "visual": { "guidelineNames": [], "categories": [] },
+      "functional": {
+        "guidelineNames": ["Roller Shades", "Sheer Shades", "Sheer Vertical Blinds", "Wood Blinds", "Zebra Shades", "Cloth Blinds", "Cellular Shades"],
+        "categories": ["Roller Shades", "Sheer Shades", "Sheer Vertical Blinds", "Wood Blinds", "Zebra Shades", "Cloth Blinds", "Cellular Shades", "Blackout Cellular Shades"]
+      }
+    },
+    "pantry": {
+      "label": "Pantry",
+      "coreNeeds": ["Functional simplicity", "Basic light control", "Easy maintenance"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "low", "moisture": "low", "safety": "low" },
+      "visual": { "guidelineNames": [], "categories": [] },
+      "functional": {
+        "guidelineNames": ["Roller Shades", "Aluminum Blinds", "Vinyl Blinds"],
+        "categories": ["Roller Shades", "Aluminum Blinds", "Vinyl Blinds"]
+      }
+    },
+    "basement": {
+      "label": "Basement",
+      "coreNeeds": ["Warm atmosphere", "Privacy", "Softened daylight"],
+      "needsProfile": { "privacy": "high", "blackout": "low", "glare": "low", "moisture": "medium", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Cellular Shades", "Faux Wood Blinds", "Aluminum Blinds", "Roller Shades"],
+        "categories": ["Cellular Shades", "Blackout Cellular Shades", "Aluminum Blinds", "Roller Shades"]
+      },
+      "functional": { "guidelineNames": [], "categories": [] }
+    },
+    "entry": {
+      "label": "Entry",
+      "coreNeeds": ["First impression", "Soft daylight", "Privacy control"],
+      "needsProfile": { "privacy": "medium", "blackout": "low", "glare": "low", "moisture": "low", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Sheer Curtain", "Roman Shades", "Sheer Shades", "Stirpe Bamboo Curtain", "Cellular Shades"],
+        "categories": ["Sheer Curtains", "Roman Shades", "Sheer Shades", "Cellular Shades", "Blackout Cellular Shades"]
+      },
+      "functional": { "guidelineNames": [], "categories": [] }
+    },
+    "mud-room": {
+      "label": "Mud Room",
+      "coreNeeds": ["Durability", "Easy maintenance", "Everyday functionality"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "low", "moisture": "medium", "safety": "low" },
+      "visual": { "guidelineNames": [], "categories": [] },
+      "functional": {
+        "guidelineNames": ["Roller Shades", "Vinyl Blinds", "Aluminum Blinds", "Cellular Shades"],
+        "categories": ["Roller Shades", "Vinyl Blinds", "Aluminum Blinds", "Cellular Shades", "Blackout Cellular Shades"]
+      }
+    },
+    "hall": {
+      "label": "Hall",
+      "coreNeeds": ["Unified visual language", "Balanced daylight", "Spatial continuity"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "low", "moisture": "low", "safety": "low" },
+      "visual": {
+        "guidelineNames": ["Sheer Curtains", "Solar Shades", "Stirpe Bamboo Curtain"],
+        "categories": ["Sheer Curtains", "Solar Shades"]
+      },
+      "functional": { "guidelineNames": [], "categories": [] }
+    },
+    "media-room": {
+      "label": "Media Room",
+      "coreNeeds": ["Full blackout", "Glare elimination", "Immersive atmosphere"],
+      "needsProfile": { "privacy": "medium", "blackout": "high", "glare": "high", "moisture": "low", "safety": "low" },
+      "visual": { "guidelineNames": [], "categories": [] },
+      "functional": {
+        "guidelineNames": ["Blackout Drapery", "Blackout Roller Shades", "Blackout Roman Shades", "Cellular Shades"],
+        "categories": ["Blackout Drapery", "Blackout Roller Shades", "Cellular Shades", "Blackout Cellular Shades"]
+      }
+    },
+    "laundry-room": {
+      "label": "Laundry Room",
+      "coreNeeds": ["Moisture resistance", "Easy maintenance", "Basic privacy"],
+      "needsProfile": { "privacy": "medium", "blackout": "low", "glare": "low", "moisture": "high", "safety": "low" },
+      "visual": { "guidelineNames": [], "categories": [] },
+      "functional": {
+        "guidelineNames": ["Roller Shades", "Vinyl Blinds", "Aluminum Blinds", "Solar Shades"],
+        "categories": ["Roller Shades", "Vinyl Blinds", "Aluminum Blinds", "Solar Shades"]
+      }
+    },
+    "garage": {
+      "label": "Garage",
+      "coreNeeds": ["Privacy", "Durability", "Heat reduction"],
+      "needsProfile": { "privacy": "high", "blackout": "low", "glare": "medium", "moisture": "medium", "safety": "low" },
+      "visual": { "guidelineNames": [], "categories": [] },
+      "functional": {
+        "guidelineNames": ["Solar Shades", "Outdoor & Patio Shades"],
+        "categories": ["Solar Shades", "Outdoor & Patio Shades"]
+      }
+    },
+    "sunroom": {
+      "label": "Sunroom",
+      "coreNeeds": ["Sun protection & heat reduction", "Maintain outdoor views", "Soften harsh daylight", "Improve all-season comfort"],
+      "needsProfile": { "privacy": "low", "blackout": "low", "glare": "high", "moisture": "low", "safety": "low" },
+      "visual": { "guidelineNames": [], "categories": [] },
+      "functional": {
+        "guidelineNames": ["Solar Shades", "Outdoor & Patio Shades", "Cellular Shades", "Zebra / Dual Shades"],
+        "categories": ["Solar Shades", "Outdoor & Patio Shades", "Cellular Shades", "Blackout Cellular Shades", "Zebra Shades"]
+      }
+    }
+  }
+}

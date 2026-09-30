@@ -176,7 +176,7 @@ async function generateGeminiProductPreview({ model, prompt, inputs }) {
   };
 }
 
-function buildPreviewPrompt({ product, variant, recommendation }) {
+export function buildPreviewPrompt({ product, variant, recommendation }) {
   const swatchInstruction = variant?.swatchImagePath
     ? "Use the third image as the source of truth for the selected variant's color, material texture, and surface finish."
     : "Use the selected variant metadata as the source of truth for color, material texture, and surface finish.";

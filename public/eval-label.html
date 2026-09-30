@@ -10,6 +10,7 @@
     <header class="bar">
       <div class="bar-left">
         <strong>Eval labeling</strong>
+        <span id="catalog-name" class="muted mono"></span>
         <span id="progress" class="muted">loading…</span>
       </div>
       <div class="bar-right">
@@ -41,7 +42,8 @@
           <p><strong>Click</strong> a swatch to cycle: unlabeled → <span class="chip good">acceptable</span> → <span class="chip bad">unacceptable</span> → unlabeled</p>
           <p><strong>Shift-click</strong> to mark <span class="chip ideal">★ ideal</span> (implies acceptable)</p>
           <p class="muted">The unacceptable set carries the most signal — tag what would be clearly wrong even when you are unsure which neutral is best.</p>
-          <p class="muted">← / → switch cases. Saves automatically.</p>
+          <p class="muted"><strong>✕ rest</strong> on a category or product marks everything in it you haven't labeled as unacceptable, and leaves your ✓ and ★ alone. Use it when a whole type doesn't suit the window.</p>
+          <p class="muted">← / → switch cases. <strong>/</strong> jumps to search. Saves automatically.</p>
         </div>
 
         <div class="counts">
@@ -49,9 +51,27 @@
           <span id="count-unacceptable">0 unacceptable</span>
           <span id="count-ideal">0 ideal</span>
         </div>
+        <div id="coverage" class="coverage muted"></div>
       </section>
 
-      <section class="catalog-pane" id="catalog-pane"></section>
+      <section class="catalog-column">
+        <div class="filters">
+          <div class="filter-row">
+            <input id="search-input" type="search" placeholder="search product, colour, id…  ( / )" autocomplete="off" />
+            <span id="state-chips" class="chip-row">
+              <button class="filter-chip" type="button" data-state="all" aria-pressed="true">all</button>
+              <button class="filter-chip" type="button" data-state="unlabeled" aria-pressed="false">unlabeled</button>
+              <button class="filter-chip" type="button" data-state="labeled" aria-pressed="false">labeled</button>
+            </span>
+            <span class="filter-spacer"></span>
+            <span id="visible-count" class="muted"></span>
+            <button id="collapse-all" type="button" class="small">collapse all</button>
+            <button id="expand-all" type="button" class="small">expand all</button>
+          </div>
+          <div id="family-chips" class="chip-row family-row"></div>
+        </div>
+        <div class="catalog-pane" id="catalog-pane"></div>
+      </section>
     </main>
 
     <nav class="case-strip" id="case-strip"></nav>

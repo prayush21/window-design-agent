@@ -1,0 +1,460 @@
+{
+  "room": "indy-window",
+  "fixtures": [
+    {
+      "stage": "perceive",
+      "key": {
+        "photo": "19ca4e290c5309a8"
+      },
+      "responses": [
+        {
+          "json": {
+            "roomType": {
+              "value": "home-office",
+              "confidence": 0.8,
+              "evidence": "desk, mesh office chair and monitor in front of the window"
+            },
+            "windowType": {
+              "value": "sliding",
+              "confidence": 0.5,
+              "evidence": "two-by-two grid with a horizontal meeting rail"
+            },
+            "windowShape": {
+              "value": "wide rectangle",
+              "confidence": 0.85
+            },
+            "windowRegion": {
+              "value": {
+                "x": 0.15,
+                "y": 0.04,
+                "w": 0.68,
+                "h": 0.66
+              },
+              "confidence": 0.8
+            },
+            "palette": {
+              "value": [
+                {
+                  "hex": "#a88e70",
+                  "name": "warm tan wall",
+                  "role": "wall",
+                  "weight": 0.45
+                },
+                {
+                  "hex": "#1d1b19",
+                  "name": "black window frame",
+                  "role": "trim",
+                  "weight": 0.12
+                },
+                {
+                  "hex": "#c8a77a",
+                  "name": "light wood desk",
+                  "role": "furniture",
+                  "weight": 0.1
+                },
+                {
+                  "hex": "#2a2826",
+                  "name": "black mesh chair",
+                  "role": "furniture",
+                  "weight": 0.08
+                },
+                {
+                  "hex": "#b9bdb8",
+                  "name": "overcast sky",
+                  "role": "other",
+                  "weight": 0.25
+                }
+              ],
+              "confidence": 0.7
+            },
+            "materials": {
+              "value": [
+                "painted drywall",
+                "black metal window frame",
+                "wood laminate desk",
+                "mesh office chair"
+              ],
+              "confidence": 0.65
+            },
+            "styleTags": {
+              "value": [
+                "functional",
+                "simple",
+                "warm"
+              ],
+              "confidence": 0.5
+            },
+            "lightLevel": {
+              "value": "medium",
+              "confidence": 0.6,
+              "evidence": "overcast daylight, large window"
+            },
+            "existingCovering": {
+              "value": "white aluminium mini blind, fully raised",
+              "confidence": 0.8
+            },
+            "needs": {
+              "privacy": {
+                "value": "medium",
+                "confidence": 0.6,
+                "evidence": "ground floor facing a bike rack and street"
+              },
+              "blackout": {
+                "value": "low",
+                "confidence": 0.6
+              },
+              "glare": {
+                "value": "high",
+                "confidence": 0.65,
+                "evidence": "desk and screen face the window"
+              },
+              "moisture": {
+                "value": "low",
+                "confidence": 0.8
+              },
+              "safety": {
+                "value": "low",
+                "confidence": 0.7
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stage": "plan",
+      "key": {
+        "roomType": "home-office",
+        "palette": [
+          "#a88e70",
+          "#1d1b19",
+          "#c8a77a",
+          "#2a2826",
+          "#b9bdb8"
+        ],
+        "needs": {
+          "privacy": "medium",
+          "blackout": "low",
+          "glare": "high",
+          "moisture": "low",
+          "safety": "low"
+        },
+        "preferences": null,
+        "previous": []
+      },
+      "note": "BROKEN: attempt 1 omits lightLevel on d2 (schema failure). Attempt 2 puts Blackout Drapery, which a home office does not allow, in d3's visual layer; code repair removes it.",
+      "responses": [
+        {
+          "broken": "schema",
+          "json": {
+            "directions": [
+              {
+                "id": "d1",
+                "title": "Glare-free focus",
+                "intent": "Cut screen glare with a sheer shade that echoes the tan walls, backed by a solar shade.",
+                "layers": {
+                  "visual": [
+                    "Sheer Shades"
+                  ],
+                  "functional": [
+                    "Solar Shades"
+                  ]
+                },
+                "colourStrategy": "tonal",
+                "lightLevel": "filtered",
+                "textureNote": "Fine sheer vanes."
+              },
+              {
+                "id": "d2",
+                "title": "Crisp workspace",
+                "intent": "A clean neutral backdrop for video calls.",
+                "layers": {
+                  "visual": [
+                    "Zebra Shades",
+                    "Vertical Blinds"
+                  ],
+                  "functional": [
+                    "Roller Shades"
+                  ]
+                },
+                "colourStrategy": "neutral-anchor",
+                "textureNote": "Smooth, matte."
+              },
+              {
+                "id": "d3",
+                "title": "Warm timber contrast",
+                "intent": "Frame the black window with warm wood slats that stand apart from the walls.",
+                "layers": {
+                  "visual": [
+                    "Wood Blinds"
+                  ],
+                  "functional": [
+                    "Blackout Cellular Shades"
+                  ]
+                },
+                "colourStrategy": "contrast",
+                "lightLevel": "dark",
+                "textureNote": "Visible grain."
+              }
+            ]
+          }
+        },
+        {
+          "broken": "check",
+          "json": {
+            "directions": [
+              {
+                "id": "d1",
+                "title": "Glare-free focus",
+                "intent": "Cut screen glare with a sheer shade that echoes the tan walls, backed by a solar shade.",
+                "layers": {
+                  "visual": [
+                    "Sheer Shades"
+                  ],
+                  "functional": [
+                    "Solar Shades"
+                  ]
+                },
+                "colourStrategy": "tonal",
+                "lightLevel": "filtered",
+                "textureNote": "Fine sheer vanes."
+              },
+              {
+                "id": "d2",
+                "title": "Crisp workspace",
+                "intent": "A clean neutral backdrop for video calls that lets daylight in.",
+                "layers": {
+                  "visual": [
+                    "Zebra Shades",
+                    "Vertical Blinds"
+                  ],
+                  "functional": [
+                    "Roller Shades"
+                  ]
+                },
+                "colourStrategy": "neutral-anchor",
+                "lightLevel": "bright",
+                "textureNote": "Smooth, matte."
+              },
+              {
+                "id": "d3",
+                "title": "Warm timber contrast",
+                "intent": "Frame the black window with warm wood and a heavy drape that stand apart from the walls.",
+                "layers": {
+                  "visual": [
+                    "Blackout Drapery",
+                    "Wood Blinds"
+                  ],
+                  "functional": [
+                    "Blackout Cellular Shades"
+                  ]
+                },
+                "colourStrategy": "contrast",
+                "lightLevel": "dark",
+                "textureNote": "Visible grain."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "roomType": "home-office",
+        "directionId": "d1",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d1",
+            "visual": {
+              "productId": "SHS26002",
+              "variantId": "SHS26002-P03"
+            },
+            "functional": {
+              "productId": "SOS26003",
+              "variantId": "SOS2600302B6"
+            },
+            "rationale": [
+              {
+                "claim": "A natural sheer shade sits close to the tan walls and diffuses light behind the monitor.",
+                "briefFields": [
+                  "palette",
+                  "needs.glare"
+                ]
+              },
+              {
+                "claim": "A light beige solar shade cuts glare on bright days while keeping the view of the street.",
+                "briefFields": [
+                  "needs.glare",
+                  "needs.privacy"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "roomType": "home-office",
+        "directionId": "d2",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d2",
+            "visual": {
+              "productId": "ZES26004",
+              "variantId": "ZES2600401B7"
+            },
+            "functional": {
+              "productId": "RLS26012",
+              "variantId": "RLS2601202B2"
+            },
+            "rationale": [
+              {
+                "claim": "A light grey zebra shade is a quiet, even backdrop for video calls.",
+                "briefFields": [
+                  "styleTags",
+                  "roomType"
+                ]
+              },
+              {
+                "claim": "Its bands tilt between view and privacy for a ground-floor desk facing the street.",
+                "briefFields": [
+                  "needs.privacy",
+                  "needs.glare"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "roomType": "home-office",
+        "directionId": "d3",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d3",
+            "visual": {
+              "productId": "WOB26001",
+              "variantId": "WOB26001-P05"
+            },
+            "functional": {
+              "productId": "CES26004",
+              "variantId": "CES26004-P02"
+            },
+            "rationale": [
+              {
+                "claim": "Vintage oak slats contrast with the black frame and warm up the tan wall.",
+                "briefFields": [
+                  "palette",
+                  "materials"
+                ]
+              },
+              {
+                "claim": "Slats tilt to block direct glare on the desk; a blackout cellular shade darkens the room fully when needed.",
+                "briefFields": [
+                  "needs.glare",
+                  "needs.blackout"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "directionId": "d1",
+        "variantId": "SHS26002-P03",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 5,
+              "roomFit": 5,
+              "installed": 4
+            },
+            "reason": "A natural sheer shade softens light behind the desk without darkening the room; exactly the glare brief.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "directionId": "d2",
+        "variantId": "ZES2600401B7",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "A light grey zebra shade gives a clean, even backdrop for calls.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "19ca4e290c5309a8",
+        "directionId": "d3",
+        "variantId": "WOB26001-P05",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 3,
+              "installed": 4
+            },
+            "reason": "Oak slats warm the room and contrast with the black frame; slats control glare well, though they are heavier than the other two options.",
+            "revisionHint": null
+          }
+        }
+      ]
+    }
+  ]
+}

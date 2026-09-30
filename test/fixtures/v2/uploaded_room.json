@@ -1,0 +1,466 @@
+{
+  "room": "uploaded_room",
+  "fixtures": [
+    {
+      "stage": "perceive",
+      "key": {
+        "photo": "0eba9971ceb21c9a"
+      },
+      "responses": [
+        {
+          "json": {
+            "roomType": {
+              "value": "living-room",
+              "confidence": 0.8,
+              "evidence": "sofa with throw, coffee table with a jigsaw puzzle"
+            },
+            "windowType": {
+              "value": "casement",
+              "confidence": 0.6,
+              "evidence": "three side-by-side sashes with crank handles"
+            },
+            "windowShape": {
+              "value": "triple bank",
+              "confidence": 0.85
+            },
+            "windowRegion": {
+              "value": {
+                "x": 0.09,
+                "y": 0.36,
+                "w": 0.83,
+                "h": 0.4
+              },
+              "confidence": 0.85
+            },
+            "palette": {
+              "value": [
+                {
+                  "hex": "#8e9aa3",
+                  "name": "cool blue-grey wall",
+                  "role": "wall",
+                  "weight": 0.45
+                },
+                {
+                  "hex": "#e9e6df",
+                  "name": "white trim",
+                  "role": "trim",
+                  "weight": 0.12
+                },
+                {
+                  "hex": "#2f4a73",
+                  "name": "navy coffee table",
+                  "role": "furniture",
+                  "weight": 0.1
+                },
+                {
+                  "hex": "#283346",
+                  "name": "navy sofa",
+                  "role": "furniture",
+                  "weight": 0.1
+                },
+                {
+                  "hex": "#a7a39c",
+                  "name": "grey carpet",
+                  "role": "floor",
+                  "weight": 0.13
+                },
+                {
+                  "hex": "#e8c48a",
+                  "name": "warm lamp glow",
+                  "role": "accent",
+                  "weight": 0.05
+                }
+              ],
+              "confidence": 0.75
+            },
+            "materials": {
+              "value": [
+                "painted drywall",
+                "painted wood trim",
+                "upholstered sofa",
+                "low-pile carpet"
+              ],
+              "confidence": 0.65
+            },
+            "styleTags": {
+              "value": [
+                "casual",
+                "cool",
+                "cozy"
+              ],
+              "confidence": 0.55
+            },
+            "lightLevel": {
+              "value": "medium",
+              "confidence": 0.6,
+              "evidence": "overcast daylight plus a lamp"
+            },
+            "existingCovering": {
+              "value": "white faux-wood horizontal blinds, one per sash, raised",
+              "confidence": 0.8
+            },
+            "needs": {
+              "privacy": {
+                "value": "medium",
+                "confidence": 0.55,
+                "evidence": "faces a driveway"
+              },
+              "blackout": {
+                "value": "low",
+                "confidence": 0.5
+              },
+              "glare": {
+                "value": "medium",
+                "confidence": 0.45
+              },
+              "moisture": {
+                "value": "low",
+                "confidence": 0.8
+              },
+              "safety": {
+                "value": "low",
+                "confidence": 0.7
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stage": "plan",
+      "key": {
+        "roomType": "living-room",
+        "palette": [
+          "#8e9aa3",
+          "#e9e6df",
+          "#2f4a73",
+          "#283346",
+          "#a7a39c",
+          "#e8c48a"
+        ],
+        "needs": {
+          "privacy": "medium",
+          "blackout": "low",
+          "glare": "medium",
+          "moisture": "low",
+          "safety": "low"
+        },
+        "preferences": null,
+        "previous": []
+      },
+      "responses": [
+        {
+          "json": {
+            "directions": [
+              {
+                "id": "d1",
+                "title": "Coastal calm",
+                "intent": "Soft Roman shades in the wall's blue-grey family make the triple window read as one calm surface.",
+                "layers": {
+                  "visual": [
+                    "Roman Shades"
+                  ],
+                  "functional": [
+                    "Solar Shades"
+                  ]
+                },
+                "colourStrategy": "tonal",
+                "lightLevel": "filtered",
+                "textureNote": "Relaxed linen folds."
+              },
+              {
+                "id": "d2",
+                "title": "Warm counterpoint",
+                "intent": "Balance the cool walls and navy furniture with warm curtains that pick up the lamp glow.",
+                "layers": {
+                  "visual": [
+                    "Sheer Curtains",
+                    "Drapery Panels"
+                  ],
+                  "functional": null
+                },
+                "colourStrategy": "complementary",
+                "lightLevel": "bright",
+                "textureNote": "Slubbed, warm-toned weave."
+              },
+              {
+                "id": "d3",
+                "title": "Crisp white frame",
+                "intent": "Echo the white trim with pale blinds that keep the view and read as architecture.",
+                "layers": {
+                  "visual": [
+                    "Wood Blinds",
+                    "Sheer Vertical Blinds"
+                  ],
+                  "functional": [
+                    "Zebra Shades"
+                  ]
+                },
+                "colourStrategy": "neutral-anchor",
+                "lightLevel": "filtered",
+                "textureNote": "Smooth painted slats."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "roomType": "living-room",
+        "directionId": "d1",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d1",
+            "visual": {
+              "productId": "RMS26002",
+              "variantId": "RMS26002-P02"
+            },
+            "functional": {
+              "productId": "SOS26001",
+              "variantId": "SOS2600102B7"
+            },
+            "rationale": [
+              {
+                "claim": "Sky blue Roman shades sit in the blue-grey wall family, so the triple window reads as one calm surface.",
+                "briefFields": [
+                  "palette",
+                  "windowShape"
+                ]
+              },
+              {
+                "claim": "A light greige solar shade softens daylight and keeps the view of the trees.",
+                "briefFields": [
+                  "lightLevel",
+                  "needs.glare"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "roomType": "living-room",
+        "directionId": "d2",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d2",
+            "visual": {
+              "productId": "CUR26005",
+              "variantId": "CUR2600502B6"
+            },
+            "functional": null,
+            "rationale": [
+              {
+                "claim": "Warm linen beige balances the cool walls and navy furniture and picks up the lamp glow.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "Full-height curtains soften a casual, cosy living room.",
+                "briefFields": [
+                  "styleTags",
+                  "roomType"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "roomType": "living-room",
+        "directionId": "d3",
+        "exclude": [],
+        "preferences": null,
+        "feedback": null
+      },
+      "responses": [
+        {
+          "json": {
+            "directionId": "d3",
+            "visual": {
+              "productId": "WOB26001",
+              "variantId": "WOB26001-P03"
+            },
+            "functional": {
+              "productId": "ZES26004",
+              "variantId": "ZES2600401B7"
+            },
+            "rationale": [
+              {
+                "claim": "Pristine white slats echo the white trim.",
+                "briefFields": [
+                  "palette"
+                ]
+              },
+              {
+                "claim": "A light grey zebra shade handles privacy toward the driveway.",
+                "briefFields": [
+                  "needs.privacy"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "directionId": "d1",
+        "variantId": "RMS26002-P02",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 5,
+              "intent": 5,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "Sky blue Roman shades make the triple window one calm surface in the blue-grey room.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "directionId": "d2",
+        "variantId": "CUR2600502B6",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "broken": "json",
+          "rawText": "Verdict: ACCEPT. The warm linen balances the cool room"
+        },
+        {
+          "broken": "json",
+          "rawText": "{\"verdict\": \"ACCEPT\", \"scores\": {\"harmony\": 4,"
+        }
+      ],
+      "note": "BROKEN: invalid JSON on both attempts. Expect retry, then the fallback: no verdict, proposal shown as unreviewed."
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "directionId": "d3",
+        "variantId": "WOB26001-P03",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "DROP",
+            "scores": {
+              "harmony": 3,
+              "intent": 2,
+              "roomFit": 3,
+              "installed": 4
+            },
+            "reason": "White slats look almost identical to the existing white faux-wood blinds; this direction changes nothing for the person.",
+            "revisionHint": null
+          }
+        }
+      ]
+    },
+    {
+      "stage": "compose",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "roomType": "living-room",
+        "directionId": "d1",
+        "exclude": [
+          "RMS26002-P02"
+        ],
+        "preferences": "warmer",
+        "feedback": "warmer"
+      },
+      "note": "Round 2, after the person said 'warmer' about r1-d1-a1.",
+      "responses": [
+        {
+          "json": {
+            "directionId": "d1",
+            "visual": {
+              "productId": "RMS26003",
+              "variantId": "RMS26003-P05"
+            },
+            "functional": {
+              "productId": "SOS26001",
+              "variantId": "SOS2600102B7"
+            },
+            "rationale": [
+              {
+                "claim": "Earthy greige keeps the calm Roman shade but shifts it warm, as you asked.",
+                "briefFields": [
+                  "preferences.warmth",
+                  "preferences.text"
+                ]
+              },
+              {
+                "claim": "It still sits close enough to the blue-grey wall to read as one surface across the three sashes.",
+                "briefFields": [
+                  "palette",
+                  "windowShape"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "critique",
+      "key": {
+        "photo": "0eba9971ceb21c9a",
+        "directionId": "d1",
+        "variantId": "RMS26003-P05",
+        "renderAttempt": 1
+      },
+      "responses": [
+        {
+          "json": {
+            "verdict": "ACCEPT",
+            "scores": {
+              "harmony": 4,
+              "intent": 4,
+              "roomFit": 4,
+              "installed": 4
+            },
+            "reason": "Warmer than the sky blue while keeping the calm, unified window; answers the feedback.",
+            "revisionHint": null
+          }
+        }
+      ]
+    }
+  ]
+}

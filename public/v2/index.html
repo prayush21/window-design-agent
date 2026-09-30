@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Window Design Agent v2</title>
+    <link rel="stylesheet" href="/v2/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Window design agent · v2</p>
+        <h1>Propose, render, critique</h1>
+      </div>
+      <div class="topbar-right">
+        <span id="mode-badge" class="badge">…</span>
+        <label class="inline">
+          <span>Orchestrator</span>
+          <select id="orchestrator"></select>
+        </label>
+        <a href="/v2/label-critique.html">Label critiques</a>
+        <a href="/v2/compare.html">Compare v1/v2</a>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel start">
+        <h2>1 · Room</h2>
+        <div id="rooms" class="room-grid" aria-label="Eval rooms"></div>
+        <label class="upload">
+          <input id="upload" type="file" accept="image/jpeg,image/png,image/webp" />
+          <span>…or upload a photo</span>
+        </label>
+        <p id="upload-note" class="muted small" hidden>
+          In mock mode only the eval rooms above have fixtures; an uploaded photo will stop at PERCEIVE with a clear error.
+        </p>
+        <img id="room-preview" class="room-preview" alt="Selected room" hidden />
+
+        <h2>2 · Anything we should know?</h2>
+        <textarea id="prefs" rows="3" placeholder="e.g. warmer tones, no grey, I work from here"></textarea>
+        <label class="stack">
+          <span>Room type (optional; otherwise inferred)</span>
+          <select id="room-type"><option value="">Infer from the photo</option></select>
+        </label>
+        <label class="check" title="Live mode normally reuses a saved model answer when a step gets exactly the same input. Tick to call every model again.">
+          <input id="fresh" type="checkbox" /> Fresh run (don't reuse saved answers)
+        </label>
+        <button id="run" type="button" disabled>Design this window</button>
+        <p id="status" class="muted small" role="status"></p>
+      </aside>
+
+      <section class="results" aria-live="polite">
+        <div id="warnings" class="warnings" hidden></div>
+        <section id="presentation-section" hidden>
+          <h2>Proposals</h2>
+          <div id="presentation" class="cards"></div>
+          <div id="assumptions" class="assumptions"></div>
+          <form id="feedback-form" class="feedback" hidden>
+            <input id="feedback" type="text" placeholder="Tell me what to change: “warmer”, “this is a nursery”, “no blue”…" />
+            <button type="submit">Send feedback</button>
+          </form>
+          <div id="react-note" class="muted small"></div>
+        </section>
+        <section id="brief-section" hidden>
+          <h2>Brief <span class="muted small">— what I understood, and where it came from</span></h2>
+          <div class="legend"><span class="src stated">stated</span><span class="src inferred">inferred</span><span class="src assumed">assumed</span></div>
+          <div id="brief" class="brief"></div>
+        </section>
+        <section id="directions-section" hidden>
+          <h2>Directions</h2>
+          <div id="directions" class="directions"></div>
+        </section>
+        <section id="decisions-section" hidden>
+          <h2>Decisions</h2>
+          <ol id="decisions" class="decisions"></ol>
+        </section>
+        <section id="trace-section" hidden>
+          <p class="muted small">Session <code id="session-id"></code> · <a id="trace-link" target="_blank" rel="noopener">trace JSON</a></p>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="/v2/app.js"></script>
+  </body>
+</html>

@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import { getMimeType, loadCatalog, selectCandidates } from "./catalog.js";
 import { handleEvalRequest } from "./eval/label-api.js";
 import { generateProductPreview } from "./image-preview.js";
+import { createAccessGate } from "./access.js";
+import { handleV2Request } from "./v2/routes.js";
 import { DEFAULT_RECOMMENDATION_PROMPT, normalizeProvider, rerankProducts } from "./providers.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +18,7 @@ const CATALOG_DIR = process.env.DESIGN_AGENT_CATALOG_DIR
   ? path.resolve(ROOT_DIR, process.env.DESIGN_AGENT_CATALOG_DIR)
   : path.join(ROOT_DIR, "window-products-v1");
 const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || undefined;
 const MAX_JSON_BYTES = 16 * 1024 * 1024;
 const MAX_RANKED_OPTIONS = 10;
 
@@ -32,8 +35,11 @@ const MIME_TYPES = {
 };
 
 export function createAppServer() {
+  const accessGate = createAccessGate({ usageFile: path.join(ROOT_DIR, "var", "usage.json") });
   return http.createServer(async (req, res) => {
     try {
+      if (await accessGate(req, res)) return;
+
       if (req.method === "GET" && req.url === "/api/catalog") {
         return sendJson(res, publicCatalog());
       }
@@ -58,6 +64,10 @@ export function createAppServer() {
         return;
       }
 
+      if (await handleV2Request(req, res)) {
+        return;
+      }
+
       if (req.method === "GET") {
         return serveStatic(req, res);
       }
@@ -71,8 +81,9 @@ export function createAppServer() {
 
 if (process.argv[1] === __filename) {
   const server = createAppServer();
-  server.listen(PORT, () => {
-    console.log(`Window design agent running at http://localhost:${PORT}`);
+  server.listen(PORT, HOST, () => {
+    console.log(`Window design agent running at http://${HOST || "localhost"}:${PORT}`);
+    if (process.env.ACCESS_PASSCODE) console.log("Access gate on: remote requests need the passcode and count against the daily run limit.");
   });
 }
 
